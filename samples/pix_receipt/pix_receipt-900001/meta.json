@@ -1,0 +1,47 @@
+{
+  "doc_type": "pix_receipt",
+  "seed": 900001,
+  "layout": "thermal_slip",
+  "payee_key_type": "cnpj",
+  "absent_fields": [
+    "payee.account",
+    "payee.agency",
+    "payer.account",
+    "payer.agency",
+    "payer.document"
+  ],
+  "traps": [
+    "payer.name"
+  ],
+  "printed_text": [
+    "COMPROVANTE PIX",
+    "28/03/2025 04:17",
+    "VALOR",
+    "R$ 250,19",
+    "PAGADOR",
+    "NOME",
+    "STHEFFANY RAMOS",
+    "INST.",
+    "JATOBÁ BANCO DIGITAL S.A.",
+    "RECEBEDOR",
+    "NOME",
+    "RAMOS",
+    "CPF/CNPJ",
+    "94.663.233/0001-18",
+    "INST.",
+    "CAJU PAGAMENTOS S.A.",
+    "CHAVE",
+    "94.663.233/0001-18",
+    "MSG",
+    "MENSALIDADE ACADEMIA",
+    "ID",
+    "E63018827202503280417kNVXVmnwV2a",
+    "OBRIGADO PELA PREFERENCIA"
+  ],
+  "generator_version": "0.2.1",
+  "images": {
+    "L0": "L0.png",
+    "L1": "L1.jpg",
+    "L2": "L2.jpg"
+  }
+}

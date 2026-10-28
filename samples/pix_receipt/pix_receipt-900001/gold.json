@@ -1,0 +1,21 @@
+{
+  "amount": "250.19",
+  "datetime": "2025-03-28T04:17",
+  "end_to_end_id": "E63018827202503280417kNVXVmnwV2a",
+  "description": "mensalidade academia",
+  "payer": {
+    "name": "Stheffany Ramos",
+    "document": null,
+    "institution": "Jatobá Banco Digital S.A.",
+    "agency": null,
+    "account": null
+  },
+  "payee": {
+    "name": "Ramos",
+    "document": "94.663.233/0001-18",
+    "institution": "Caju Pagamentos S.A.",
+    "agency": null,
+    "account": null
+  },
+  "payee_key": "94.663.233/0001-18"
+}

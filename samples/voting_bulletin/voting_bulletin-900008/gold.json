@@ -1,0 +1,57 @@
+{
+  "election": "Eleições Gerais 2022",
+  "round": 2,
+  "date": "2022-10-30",
+  "state": "TO",
+  "municipality_code": "35859",
+  "municipality": "Filadélfia",
+  "zone": 334,
+  "section": 564,
+  "eligible_voters": 292,
+  "turnout": 227,
+  "absent": 65,
+  "contests": [
+    {
+      "office": "Governador",
+      "candidates": [
+        {
+          "number": "72",
+          "name": "DOUTOR HENRY GABRIEL",
+          "party": "MCB",
+          "votes": 178
+        },
+        {
+          "number": "76",
+          "name": "OTÁVIO VIANA",
+          "party": "ALB",
+          "votes": 32
+        }
+      ],
+      "party_votes": [],
+      "blank": 3,
+      "null_votes": 14,
+      "total": 227
+    },
+    {
+      "office": "Presidente",
+      "candidates": [
+        {
+          "number": "72",
+          "name": "TETÊ DA FEIRA",
+          "party": "MCB",
+          "votes": 109
+        },
+        {
+          "number": "73",
+          "name": "PROFESSOR MURILO",
+          "party": "PRS",
+          "votes": 91
+        }
+      ],
+      "party_votes": [],
+      "blank": 8,
+      "null_votes": 19,
+      "total": 227
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "doc_type": "pix_receipt",
+  "seed": 900000,
+  "layout": "app_card",
+  "payee_key_type": "random",
+  "absent_fields": [
+    "description",
+    "payer.account",
+    "payer.agency"
+  ],
+  "traps": [
+    "payee.name",
+    "payer.name"
+  ],
+  "printed_text": [
+    "Comprovante de transferência",
+    "Pix enviado",
+    "R$ 1,09",
+    "01/01/2025 às 11:36:02",
+    "Destino",
+    "Nome",
+    "Rayssa Siqueira",
+    "CPF/CNPJ",
+    "***.409.780-**",
+    "Instituição",
+    "Ipê Instituição de Pagamento",
+    "Agência",
+    "9579",
+    "Conta",
+    "70641798-0",
+    "Chave Pix",
+    "7aadb823-41e3-41e2-9f14-546cf113fb46",
+    "Origem",
+    "Nome",
+    "Kauã Albuquerque",
+    "CPF",
+    "***.057.873-**",
+    "Instituição",
+    "Banco Pampa S.A.",
+    "ID da transação",
+    "E17345602202501011136Nw15cQsvQe1",
+    "Este comprovante tem validade para todos os fins legais."
+  ],
+  "generator_version": "0.2.1",
+  "images": {
+    "L0": "L0.png",
+    "L1": "L1.jpg",
+    "L2": "L2.jpg"
+  }
+}

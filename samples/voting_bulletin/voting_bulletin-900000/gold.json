@@ -1,0 +1,228 @@
+{
+  "election": "Eleições Gerais 2022",
+  "round": 1,
+  "date": "2022-10-02",
+  "state": "MA",
+  "municipality_code": "04228",
+  "municipality": "Afonso Cunha",
+  "zone": 66,
+  "section": 670,
+  "eligible_voters": 400,
+  "turnout": 285,
+  "absent": 115,
+  "contests": [
+    {
+      "office": "Deputado Federal",
+      "candidates": [
+        {
+          "number": "7974",
+          "name": "ANTÔNIO SIQUEIRA",
+          "party": "NVB",
+          "votes": 146
+        },
+        {
+          "number": "7913",
+          "name": "CIDA DO SINDICATO",
+          "party": "NVB",
+          "votes": 36
+        },
+        {
+          "number": "7144",
+          "name": "ELOAH DAS NEVES",
+          "party": "PAV",
+          "votes": 24
+        },
+        {
+          "number": "7176",
+          "name": "IRMÃ ALEXANDRE",
+          "party": "PAV",
+          "votes": 19
+        }
+      ],
+      "party_votes": [
+        {
+          "party": "NVB",
+          "votes": 15
+        },
+        {
+          "party": "PAV",
+          "votes": 5
+        }
+      ],
+      "blank": 15,
+      "null_votes": 25,
+      "total": 285
+    },
+    {
+      "office": "Deputado Estadual",
+      "candidates": [
+        {
+          "number": "84555",
+          "name": "MARIANA MORAES",
+          "party": "PLT",
+          "votes": 7
+        },
+        {
+          "number": "84973",
+          "name": "IRMÃ JOÃO FELIPE",
+          "party": "PLT",
+          "votes": 28
+        },
+        {
+          "number": "84232",
+          "name": "LUCCA GUERRA",
+          "party": "PLT",
+          "votes": 46
+        },
+        {
+          "number": "84318",
+          "name": "ZÉ DO BAIRRO",
+          "party": "PLT",
+          "votes": 66
+        },
+        {
+          "number": "76322",
+          "name": "BENTO SALES",
+          "party": "ALB",
+          "votes": 46
+        },
+        {
+          "number": "76439",
+          "name": "TETÊ DA FEIRA",
+          "party": "ALB",
+          "votes": 3
+        },
+        {
+          "number": "76789",
+          "name": "JUNINHO DO BAIRRO",
+          "party": "ALB",
+          "votes": 30
+        }
+      ],
+      "party_votes": [
+        {
+          "party": "PLT",
+          "votes": 18
+        },
+        {
+          "party": "ALB",
+          "votes": 10
+        }
+      ],
+      "blank": 3,
+      "null_votes": 28,
+      "total": 285
+    },
+    {
+      "office": "Senador",
+      "candidates": [
+        {
+          "number": "788",
+          "name": "SARGENTO ANA VITÓRIA",
+          "party": "PSU",
+          "votes": 13
+        },
+        {
+          "number": "823",
+          "name": "MARIA HELENA MORAES",
+          "party": "RCB",
+          "votes": 77
+        },
+        {
+          "number": "815",
+          "name": "IRMÃ LUNNA",
+          "party": "PDE",
+          "votes": 3
+        },
+        {
+          "number": "846",
+          "name": "THALES FERNANDES",
+          "party": "PLT",
+          "votes": 52
+        },
+        {
+          "number": "798",
+          "name": "DONA NICE DO POVO",
+          "party": "NVB",
+          "votes": 64
+        },
+        {
+          "number": "739",
+          "name": "BENTO CAMARGO",
+          "party": "PRS",
+          "votes": 33
+        }
+      ],
+      "party_votes": [],
+      "blank": 22,
+      "null_votes": 21,
+      "total": 285
+    },
+    {
+      "office": "Governador",
+      "candidates": [
+        {
+          "number": "78",
+          "name": "GUSTAVO OLIVEIRA",
+          "party": "PSU",
+          "votes": 92
+        },
+        {
+          "number": "73",
+          "name": "GABRIEL DA CONCEIÇÃO",
+          "party": "PRS",
+          "votes": 121
+        },
+        {
+          "number": "71",
+          "name": "CAIO RAMOS",
+          "party": "PAV",
+          "votes": 37
+        }
+      ],
+      "party_votes": [],
+      "blank": 14,
+      "null_votes": 21,
+      "total": 285
+    },
+    {
+      "office": "Presidente",
+      "candidates": [
+        {
+          "number": "81",
+          "name": "ALLANA ALVES",
+          "party": "PDE",
+          "votes": 71
+        },
+        {
+          "number": "78",
+          "name": "ENFERMEIRA MARIA CECÍLIA",
+          "party": "PSU",
+          "votes": 104
+        },
+        {
+          "number": "84",
+          "name": "PASTOR MIRELLA",
+          "party": "PLT",
+          "votes": 20
+        },
+        {
+          "number": "79",
+          "name": "CARLOS EDUARDO FERNANDES",
+          "party": "NVB",
+          "votes": 11
+        },
+        {
+          "number": "74",
+          "name": "THALES PASTOR",
+          "party": "PIA",
+          "votes": 45
+        }
+      ],
+      "party_votes": [],
+      "blank": 20,
+      "null_votes": 14,
+      "total": 285
+    }
+  ]
+}

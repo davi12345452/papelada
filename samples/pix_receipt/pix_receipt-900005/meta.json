@@ -1,0 +1,46 @@
+{
+  "doc_type": "pix_receipt",
+  "seed": 900005,
+  "layout": "statement",
+  "payee_key_type": "phone",
+  "absent_fields": [
+    "description",
+    "payee.account",
+    "payee.agency",
+    "payer.account",
+    "payer.agency"
+  ],
+  "traps": [],
+  "printed_text": [
+    "Comprovante de Pagamento Pix",
+    "Transação concluída",
+    "Valor do pagamento",
+    "R$ 726,63",
+    "Data do pagamento",
+    "22 mai 2025 - 14:15:20",
+    "Dados do recebedor",
+    "Nome",
+    "da Mata Camargo S/A",
+    "CPF/CNPJ",
+    "97.360.093/0001-05",
+    "Chave",
+    "+55 53 94031-6666",
+    "Instituição",
+    "Jatobá Banco Digital S.A.",
+    "Dados do pagador",
+    "Nome",
+    "Sr. Fernando Sousa",
+    "CPF",
+    "***.179.367-**",
+    "Instituição",
+    "Banco Tucano S.A.",
+    "Identificador",
+    "E08562314202505221415nbbZ3Cdgxnv"
+  ],
+  "generator_version": "0.2.1",
+  "images": {
+    "L0": "L0.png",
+    "L1": "L1.jpg",
+    "L2": "L2.jpg"
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "access_key": "32250182260578000141550010004608441033057624",
+  "number": "460844",
+  "series": "1",
+  "issue_date": "2025-01-12",
+  "operation_type": "outbound",
+  "issuer": {
+    "name": "SIQUEIRA LTDA.",
+    "cnpj": "82260578000141",
+    "state_registration": "223437902205",
+    "address": {
+      "street": "Rua Princesa Isabel",
+      "number": "365",
+      "district": "Jardim Paulista",
+      "city": "Jaguaré",
+      "state": "ES",
+      "zip_code": "05049299"
+    }
+  },
+  "recipient": {
+    "name": "ABREU",
+    "document": "80539640000103",
+    "address": {
+      "street": "Travessa Frei Caneca",
+      "number": "4312",
+      "district": "Liberdade",
+      "city": "Alegre",
+      "state": "ES",
+      "zip_code": "84403427"
+    }
+  },
+  "items": [
+    {
+      "code": "7896472441930",
+      "description": "TINTA ACRILICA FOSCA 18L",
+      "ncm": "32091010",
+      "cfop": "5102",
+      "unit": "GL",
+      "quantity": "5",
+      "unit_price": "326.29",
+      "total": "1631.45"
+    },
+    {
+      "code": "7899309584078",
+      "description": "CANETA ESFEROGRAFICA AZUL CX 50",
+      "ncm": "96081000",
+      "cfop": "5102",
+      "unit": "CX",
+      "quantity": "10",
+      "unit_price": "22.40",
+      "total": "224.00"
+    },
+    {
+      "code": "PRD-815",
+      "description": "OLEO DE SOJA 900ML",
+      "ncm": "15079011",
+      "cfop": "5102",
+      "unit": "UN",
+      "quantity": "24",
+      "unit_price": "7.32",
+      "total": "175.68"
+    },
+    {
+      "code": "87011",
+      "description": "QUEIJO MUSSARELA FATIADO",
+      "ncm": "04069010",
+      "cfop": "5102",
+      "unit": "KG",
+      "quantity": "16.973",
+      "unit_price": "44.55",
+      "total": "756.15"
+    },
+    {
+      "code": "PRD-3507",
+      "description": "TENIS ESPORTIVO MASC N 42",
+      "ncm": "64041100",
+      "cfop": "5102",
+      "unit": "PAR",
+      "quantity": "1",
+      "unit_price": "398.37",
+      "total": "398.37"
+    },
+    {
+      "code": "PRD-850",
+      "description": "CAFE TORRADO E MOIDO 500G",
+      "ncm": "09012100",
+      "cfop": "5102",
+      "unit": "UN",
+      "quantity": "24",
+      "unit_price": "15.11",
+      "total": "362.64"
+    },
+    {
+      "code": "20399",
+      "description": "AGUA MINERAL S/ GAS 500ML FD 12",
+      "ncm": "22011000",
+      "cfop": "5102",
+      "unit": "FD",
+      "quantity": "2",
+      "unit_price": "17.20",
+      "total": "34.40"
+    },
+    {
+      "code": "92231",
+      "description": "ACUCAR CRISTAL 5KG",
+      "ncm": "17011400",
+      "cfop": "5102",
+      "unit": "UN",
+      "quantity": "6",
+      "unit_price": "18.09",
+      "total": "108.54"
+    },
+    {
+      "code": "PRD-957",
+      "description": "ARROZ TIPO 1 5KG",
+      "ncm": "10063021",
+      "cfop": "5102",
+      "unit": "UN",
+      "quantity": "1",
+      "unit_price": "29.51",
+      "total": "29.51"
+    },
+    {
+      "code": "PRD-2088",
+      "description": "DETERGENTE LIQUIDO NEUTRO 500ML",
+      "ncm": "34022000",
+      "cfop": "5102",
+      "unit": "UN",
+      "quantity": "24",
+      "unit_price": "3.09",
+      "total": "74.16"
+    },
+    {
+      "code": "87698",
+      "description": "CABO FLEXIVEL 2,5MM 100M",
+      "ncm": "85444900",
+      "cfop": "5102",
+      "unit": "RL",
+      "quantity": "3",
+      "unit_price": "217.64",
+      "total": "652.92"
+    }
+  ],
+  "totals": {
+    "products": "4447.82",
+    "icms_base": "0.00",
+    "icms": "0.00",
+    "freight": "0.00",
+    "discount": "0.00",
+    "invoice_total": "4447.82"
+  }
+}

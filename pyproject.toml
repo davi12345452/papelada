@@ -3,6 +3,7 @@ name = "papelada"
 version = "0.0.1"
 description = "Benchmark for structured data extraction from Brazilian documents"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "faker>=30",

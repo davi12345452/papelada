@@ -105,15 +105,17 @@ A reply that cannot be parsed as JSON is scored as an empty prediction: it lower
 
 ## Contamination policy
 
-- Public: harness, generator, methodology, results, and a ~10% sample of the test set.
-- Private: the scored test set, regenerated with new seeds each release.
+- Public: harness, generator, methodology, results, and samples (`samples/`, seeds from 900000).
+- Every sample is reproducible from its seed, so a seed is as good as the data. Scored sets use undisclosed seeds; results state which set they were run on.
+- The October 2026 results ran on seeds 0–23, which are public: treat them as a first look, not a protected leaderboard.
+- Free (`:free`) endpoints may train on inputs and are never run on a private set.
 - Real-world documents only from public sources (e.g. TSE bulletins); never personal documents.
 
 ## Open decisions
 
 - [x] Language for generator and harness: Python (managed with uv)
 - [ ] Bundle open-licensed fonts so renders are pixel-identical across machines
-- [ ] License (MIT for code; dataset license TBD)
+- [x] License: MIT for code, CC BY 4.0 for generated samples
 - [ ] Results format and leaderboard page
 
 ## Roadmap
