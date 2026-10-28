@@ -52,6 +52,7 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
 
         completion = complete(model, SYSTEM, prompt_for(schema), sample_dir / meta["images"][level])
         pred = parse_json(completion.text)
+        schema_errors = [e.message[:200] for e in Draft202012Validator(schema).iter_errors(pred)][:5] if pred else []
         record = {
             "model": model,
             "prompt_version": PROMPT_VERSION,
@@ -60,7 +61,8 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
             "layout": meta["layout"],
             "level": level,
             "valid_json": pred is not None,
-            "schema_valid": pred is not None and Draft202012Validator(schema).is_valid(pred),
+            "schema_valid": pred is not None and not schema_errors,
+            "schema_errors": schema_errors,
             "latency_s": round(completion.latency_s, 3),
             "input_tokens": completion.input_tokens,
             "output_tokens": completion.output_tokens,

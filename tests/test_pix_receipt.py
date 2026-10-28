@@ -41,6 +41,13 @@ def test_end_to_end_id_embeds_datetime(samples):
             assert e2e[9:21] == dt[:16].replace("-", "").replace("T", "").replace(":", "")
 
 
+def test_end_to_end_id_has_no_ambiguous_glyphs(samples):
+    for sample in samples:
+        e2e = sample.gold["end_to_end_id"]
+        if e2e:
+            assert not set(e2e[21:]) & set("Il"), e2e
+
+
 def test_deterministic():
     a, b = pix_receipt.generate(7), pix_receipt.generate(7)
     assert a.gold == b.gold

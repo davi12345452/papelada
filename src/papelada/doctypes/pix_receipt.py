@@ -172,7 +172,9 @@ def _fake_values(rng: random.Random, fake: Faker):
         key = str(uuid.UUID(int=rng.getrandbits(128), version=4))
     values["payee_key"] = (key, "")
 
-    suffix = "".join(rng.choice(string.ascii_letters + string.digits) for _ in range(11))
+    # "I" and "l" render identically in common sans fonts, which would make the gold unreadable.
+    alphabet = [c for c in string.ascii_letters + string.digits if c not in "Il"]
+    suffix = "".join(rng.choice(alphabet) for _ in range(11))
     values["end_to_end_id"] = (f"E{payer_inst[1]}{dt:%Y%m%d%H%M}{suffix}", "")
 
     if rng.random() < 0.35:
