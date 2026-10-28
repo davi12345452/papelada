@@ -6,4 +6,4 @@ __pycache__/
 
 # Generated samples are reproducible from seeds; the private scored set must never be committed
 data/
-results/raw/
+results/

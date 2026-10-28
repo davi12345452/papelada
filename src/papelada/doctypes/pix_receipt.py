@@ -41,6 +41,17 @@ ACCENTS = ["#5b2a86", "#0b6e4f", "#c2410c", "#1d4ed8", "#0f172a", "#be123c", "#7
 
 PARTY_FIELDS = ("name", "document", "institution", "agency", "account")
 
+# How each field is normalized before scoring (see papelada.score). Default: "text".
+FIELD_KINDS = {
+    "amount": "money",
+    "datetime": "datetime",
+    "end_to_end_id": "code",
+    "payee_key": "key",
+    "*.document": "key",
+    "*.agency": "key",
+    "*.account": "key",
+}
+
 # Field -> probability the layout hides it, to measure hallucination on absent fields.
 OPTIONAL = {
     "payer.document": 0.3,

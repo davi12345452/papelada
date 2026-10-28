@@ -14,14 +14,11 @@ from jsonschema import Draft202012Validator
 
 from papelada import GENERATOR_VERSION
 from papelada.degrade import LEVELS, degrade
-from papelada.doctypes import DOC_TYPES
-
-SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+from papelada.doctypes import DOC_TYPES, load_schema
 
 
 def validator(doc_type: str) -> Draft202012Validator:
-    schema = json.loads((SCHEMAS_DIR / f"{doc_type}.schema.json").read_text())
-    return Draft202012Validator(schema)
+    return Draft202012Validator(load_schema(doc_type))
 
 
 def generate(doc_type: str, n: int, seed: int, out: Path, levels: list[str]) -> None:
@@ -65,13 +62,38 @@ def main() -> None:
     gen.add_argument("--out", type=Path, default=Path("data/sample"))
     gen.add_argument("--levels", default=",".join(LEVELS))
 
+    run_cmd = sub.add_parser("run", help="run a model over generated samples")
+    run_cmd.add_argument("model", help="<provider>:<model id>, e.g. google:gemini-2.5-flash-lite")
+    run_cmd.add_argument("--data", type=Path, default=Path("data/sample"))
+    run_cmd.add_argument("--levels", default=",".join(LEVELS))
+    run_cmd.add_argument("--limit", type=int, help="only the first N samples")
+    run_cmd.add_argument("--workers", type=int, default=2)
+    run_cmd.add_argument("--out", type=Path, default=Path("results/runs"))
+
+    rep = sub.add_parser("report", help="summarize run files")
+    rep.add_argument("runs", type=Path, nargs="+")
+    rep.add_argument("--fields", action="store_true", help="also show the fields that fail most")
+
     args = parser.parse_args()
+    levels = args.levels.split(",") if hasattr(args, "levels") else []
+    unknown = set(levels) - set(LEVELS)
+    if unknown:
+        parser.error(f"unknown levels: {', '.join(sorted(unknown))}")
+
     if args.command == "generate":
-        levels = args.levels.split(",")
-        unknown = set(levels) - set(LEVELS)
-        if unknown:
-            parser.error(f"unknown levels: {', '.join(sorted(unknown))}")
         generate(args.doc_type, args.n, args.seed, args.out, levels)
+    elif args.command == "run":
+        from papelada.run import run
+
+        out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers)
+        print(f"\n{out_file}")
+    elif args.command == "report":
+        from papelada.report import report, worst_fields
+
+        print(report(args.runs))
+        if args.fields:
+            print()
+            print(worst_fields(args.runs))
 
 
 if __name__ == "__main__":

@@ -31,9 +31,14 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```sh
 uv sync
 uv run papelada generate pix_receipt --n 12 --seed 0 --out data/sample
+
+# Models are "<provider>:<model id>"; providers: openrouter (OPENROUTER_API_KEY), google (GOOGLE_API_KEY)
+uv run papelada run openrouter:google/gemini-2.5-flash-lite --data data/sample
+uv run papelada report results/runs/*.jsonl --fields
+
 uv run pytest
 ```
 
 ## Status
 
-Early design. The PIX receipt generator works; DANFE and voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+Early design. The PIX receipt generator, the runner and field-level scoring work; DANFE and voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
