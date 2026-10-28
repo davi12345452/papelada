@@ -63,7 +63,19 @@ Reported per model: field accuracy, hallucination rate, omission rate, table cel
 
 ## Models and baselines
 
-- Multimodal LLMs via a single gateway (OpenRouter), same prompt, temperature 0, schema in the prompt and via structured output when supported.
+- Multimodal LLMs via a single gateway (OpenRouter), same prompt, temperature 0, schema in the prompt.
+- Focus on **cheap and open-weight models** — the ones you'd actually run on thousands of documents. v0 lineup (OpenRouter IDs, USD per 1M input/output tokens as of Oct 2026):
+
+| Model | Open weights | Price in/out |
+|---|---|---|
+| `google/gemini-2.5-flash-lite` | no — cheap closed reference | 0.10 / 0.40 |
+| `qwen/qwen3-vl-30b-a3b-instruct` | yes | 0.15 / 0.60 |
+| `google/gemma-4-31b-it` | yes | 0.20 / 0.40 |
+| `mistralai/mistral-small-3.2-24b-instruct` | yes | 0.075 / 0.20 |
+| `meta-llama/llama-4-scout` | yes | 0.10 / 0.30 |
+| `nvidia/nemotron-3.5-super-vl:free` | yes | free |
+
+- Free (`:free`) endpoints may let the provider train on inputs. They are fine for the public sample, never for the private scored set.
 - Classic pipelines as baselines: Tesseract + LLM, Docling + LLM.
 - Each sample is run 3× for models without deterministic output; variance is reported.
 
