@@ -93,3 +93,23 @@ def test_long_digit_strings_on_the_page_do_not_break_scoring():
     gold = {"totals": {"freight": None, "discount": "0.00"}}
     fields = score_fields(gold, {"totals": {"freight": "12.50", "discount": "0,00"}}, DANFE_KINDS, printed)
     assert [f["bucket"] for f in fields] == ["hallucination", "correct"]
+
+
+def test_skipped_row_does_not_shift_the_rest():
+    from papelada.doctypes.danfe import FIELD_KINDS as DANFE_KINDS
+
+    rows = [{"description": f"ITEM {i}", "total": f"{i}.00"} for i in range(1, 5)]
+    pred = {"items": [rows[0], rows[2], rows[3], {"description": "ITEM 9", "total": "9.00"}]}
+    fields = score_fields({"items": rows}, pred, DANFE_KINDS, [r["description"] for r in rows])
+    buckets = {f["path"]: f["bucket"] for f in fields}
+    assert buckets["items[1].description"] == "omission"
+    assert buckets["items[3].total"] == "correct"
+    assert buckets["items[3]"] == "extra_row"
+
+
+def test_misread_of_the_right_cell_is_wrong_not_misattribution():
+    from papelada.doctypes.danfe import FIELD_KINDS as DANFE_KINDS
+
+    gold = {"items": [{"description": "FEIJAO CARIOCA 1KG"}]}
+    fields = score_fields(gold, {"items": [{"description": "FEIJÃO CARIOCA 1KG"}]}, DANFE_KINDS, ["FEIJAO CARIOCA 1KG"])
+    assert fields[0]["bucket"] == "wrong" and fields[0]["lenient_correct"]

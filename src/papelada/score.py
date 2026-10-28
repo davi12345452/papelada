@@ -14,8 +14,8 @@ Each gold leaf falls into one bucket:
 description, the payer's CPF in the payee's field) from inventing a value. It needs
 the document's printed text, which the generator records in meta.json.
 
-Lists (table rows) are aligned by position. Predicted rows beyond the gold rows are
-reported once each as "extra_row".
+Table rows are paired with gold rows by content (see _align), so a skipped row does
+not shift the rest. Predicted rows left unpaired are reported once each as "extra_row".
 
 Values are normalized by field kind before comparison (see NORMALIZERS).
 """
@@ -178,26 +178,67 @@ def lookup(obj, path: str):
     return obj
 
 
-def _lists(obj, prefix: str = ""):
-    """Yield (path, list) for every list inside obj."""
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            path = f"{prefix}.{key}" if prefix else key
-            if isinstance(value, list):
-                yield path, value
-            yield from _lists(value, path)
-    elif isinstance(obj, list):
-        for i, value in enumerate(obj):
-            yield from _lists(value, f"{prefix}[{i}]")
-
-
 def _is_empty(value) -> bool:
     return value is None or (isinstance(value, str) and value.strip() in {"", "null", "N/A", "-"})
 
 
+def _loose(value) -> str:
+    return _strip_accents(_text(value))
+
+
+def _row_similarity(gold_row, pred_row, path: str, kinds: dict[str, str]) -> int:
+    """How many cells of a predicted row match a gold row, accents ignored."""
+    if not isinstance(gold_row, dict) or not isinstance(pred_row, dict):
+        return 0
+    score = 0
+    for key, g in gold_row.items():
+        p = pred_row.get(key)
+        if g is None or isinstance(g, (dict, list)) or _is_empty(p) or isinstance(p, (dict, list)):
+            continue
+        score += _same(g, p, kind_for(f"{path}[0].{key}", kinds))[1]
+    return score
+
+
+def _align(gold, pred, kinds: dict[str, str], path: str = ""):
+    """Reorder predicted table rows to face the gold row they describe.
+
+    A skipped or duplicated row would otherwise shift every row below it and turn
+    correct readings into errors. Rows are paired greedily by matching cells, with
+    a small preference for the same position. Returns (aligned prediction, extra rows).
+    """
+    extras: list[tuple[str, object]] = []
+    if not isinstance(gold, dict) or not isinstance(pred, dict):
+        return pred, extras
+    aligned = dict(pred)
+    for key, g in gold.items():
+        sub = f"{path}.{key}" if path else key
+        p = pred.get(key)
+        if isinstance(g, list) and isinstance(p, list):
+            pairs = sorted(
+                ((_row_similarity(gr, pr, sub, kinds) + (0.5 if i == j else 0), i, j)
+                 for i, gr in enumerate(g) for j, pr in enumerate(p)),
+                reverse=True,
+            )
+            match: dict[int, int] = {}
+            for score, i, j in pairs:
+                if score >= 0.5 and i not in match and j not in match.values():
+                    match[i] = j
+            rows = []
+            for i, gold_row in enumerate(g):
+                row, nested = _align(gold_row, p[match[i]] if i in match else {}, kinds, f"{sub}[{i}]")
+                rows.append(row)
+                extras += nested
+            aligned[key] = rows
+            extras += [(f"{sub}[{j}]", p[j]) for j in range(len(p)) if j not in match.values()]
+        elif isinstance(g, dict):
+            aligned[key], nested = _align(g, p, kinds, sub)
+            extras += nested
+    return aligned, extras
+
+
 def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str], printed: list[str] | None = None) -> list[dict]:
     """Score every gold leaf. An unparseable prediction is scored as an empty one."""
-    pred = pred or {}
+    pred, extras = _align(gold, pred or {}, kinds)
     on_page = _Printed(printed or [])
     results = []
     for path, gold_value in leaves(gold).items():
@@ -215,6 +256,8 @@ def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str], printed: 
             strict, lenient = _same(gold_value, pred_value, kind)
             if strict:
                 bucket = "correct"
+            elif _loose(gold_value) == _loose(pred_value):
+                bucket = "wrong"  # the right cell, misread: added accent or changed case
             else:
                 bucket = "misattribution" if on_page.contains(pred_value, kind) else "wrong"
         results.append({
@@ -225,14 +268,8 @@ def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str], printed: 
             "pred": pred_value,
         })
 
-    for path, gold_rows in _lists(gold):
-        pred_rows = lookup(pred, path)
-        if isinstance(pred_rows, list):
-            for i in range(len(gold_rows), len(pred_rows)):
-                results.append({
-                    "path": f"{path}[{i}]", "bucket": "extra_row", "lenient_correct": False,
-                    "gold": None, "pred": pred_rows[i],
-                })
+    for path, row in extras:
+        results.append({"path": path, "bucket": "extra_row", "lenient_correct": False, "gold": None, "pred": row})
     return results
 
 

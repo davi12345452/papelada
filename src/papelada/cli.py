@@ -70,6 +70,10 @@ def main() -> None:
     run_cmd.add_argument("--workers", type=int, default=2)
     run_cmd.add_argument("--out", type=Path, default=Path("results/runs"))
 
+    res = sub.add_parser("rescore", help="recompute scores of run files from stored replies")
+    res.add_argument("runs", type=Path, nargs="+")
+    res.add_argument("--data", type=Path, default=Path("data/sample"))
+
     rep = sub.add_parser("report", help="summarize run files")
     rep.add_argument("runs", type=Path, nargs="+")
     rep.add_argument("--fields", action="store_true", help="also show the fields that fail most")
@@ -87,6 +91,12 @@ def main() -> None:
 
         out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers)
         print(f"\n{out_file}")
+    elif args.command == "rescore":
+        from papelada.run import rescore
+
+        for path in args.runs:
+            rescore(path, args.data)
+            print(f"rescored {path}")
     elif args.command == "report":
         from papelada.report import report, worst_fields
 

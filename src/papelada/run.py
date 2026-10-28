@@ -29,6 +29,34 @@ def prompt_for(schema: dict) -> str:
     return "Extract the data from this document.\n\nJSON Schema:\n" + json.dumps(schema, ensure_ascii=False)
 
 
+def evaluate(text: str | None, gold: dict, meta: dict) -> dict:
+    """Score a raw model reply. Kept separate so saved runs can be rescored without new calls."""
+    doc_type = meta["doc_type"]
+    schema = load_schema(doc_type)
+    pred = parse_json(text)
+    schema_errors = [e.message[:200] for e in Draft202012Validator(schema).iter_errors(pred)][:5] if pred else []
+    return {
+        "valid_json": pred is not None,
+        "schema_valid": pred is not None and not schema_errors,
+        "schema_errors": schema_errors,
+        "traps": meta.get("traps", []),
+        "fields": score_fields(gold, pred, DOC_TYPES[doc_type].FIELD_KINDS, meta.get("printed_text")),
+    }
+
+
+def rescore(path: Path, data_dir: Path) -> None:
+    """Recompute scores of a run file in place from the stored raw replies."""
+    records = [json.loads(line) for line in path.read_text().splitlines()]
+    for record in records:
+        sample_dir = data_dir / record["doc_type"] / record["sample"]
+        gold = json.loads((sample_dir / "gold.json").read_text())
+        meta = json.loads((sample_dir / "meta.json").read_text())
+        record.update(evaluate(record["raw"], gold, meta))
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records))
+    tmp.replace(path)
+
+
 def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | None = None, workers: int = 2) -> Path:
     tasks = []
     for gold_path in sorted(data_dir.glob("*/*/gold.json"))[:limit]:
@@ -51,8 +79,6 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
         gold = json.loads((sample_dir / "gold.json").read_text())
 
         completion = complete(model, SYSTEM, prompt_for(schema), sample_dir / meta["images"][level])
-        pred = parse_json(completion.text)
-        schema_errors = [e.message[:200] for e in Draft202012Validator(schema).iter_errors(pred)][:5] if pred else []
         record = {
             "model": model,
             "prompt_version": PROMPT_VERSION,
@@ -60,17 +86,13 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
             "sample": sample_dir.name,
             "layout": meta["layout"],
             "level": level,
-            "valid_json": pred is not None,
-            "schema_valid": pred is not None and not schema_errors,
-            "schema_errors": schema_errors,
             "latency_s": round(completion.latency_s, 3),
             "input_tokens": completion.input_tokens,
             "output_tokens": completion.output_tokens,
             "cost_usd": completion.cost_usd,
             "error": completion.error,
-            "traps": meta.get("traps", []),
-            "fields": score_fields(gold, pred, DOC_TYPES[doc_type].FIELD_KINDS, meta.get("printed_text")),
             "raw": completion.text,
+            **evaluate(completion.text, gold, meta),
         }
         with lock:
             with out_file.open("a") as f:
