@@ -69,7 +69,7 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
             "cost_usd": completion.cost_usd,
             "error": completion.error,
             "fields": score_fields(gold, pred, DOC_TYPES[doc_type].FIELD_KINDS),
-            "raw": completion.text if pred is None else None,
+            "raw": completion.text,
         }
         with lock:
             with out_file.open("a") as f:
