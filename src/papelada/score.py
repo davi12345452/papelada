@@ -73,7 +73,10 @@ def _decimal(value) -> Decimal | None:
 
 def _money(value) -> str:
     number = _decimal(value)
-    return str(number.quantize(Decimal("0.01"))) if number is not None else _text(value)
+    try:
+        return str(number.quantize(Decimal("0.01"))) if number is not None else _text(value)
+    except InvalidOperation:  # too many digits to be money, e.g. a 44-digit access key
+        return _text(value)
 
 
 def _number(value) -> str:
@@ -91,7 +94,10 @@ def _number(value) -> str:
             number = Decimal(text)
         except InvalidOperation:
             return _text(value)
-    return format(number.normalize(), "f")
+    try:
+        return format(number.normalize(), "f")
+    except InvalidOperation:
+        return _text(value)
 
 
 def _datetime(value) -> str:

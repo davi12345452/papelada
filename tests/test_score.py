@@ -83,3 +83,13 @@ def test_tables_and_numbers():
     assert buckets == ["correct"] * 5 + ["extra_row"]
     pred["items"][0]["quantity"] = "12345"
     assert score_fields(gold, pred, DANFE_KINDS)[1]["bucket"] == "wrong"
+
+
+def test_long_digit_strings_on_the_page_do_not_break_scoring():
+    from papelada.doctypes.danfe import FIELD_KINDS as DANFE_KINDS
+
+    key = "3526" * 11
+    printed = [key, "3526 1011 2223 3300 0181 5500 1000 0123 4511 8034 0633", "1" * 60]
+    gold = {"totals": {"freight": None, "discount": "0.00"}}
+    fields = score_fields(gold, {"totals": {"freight": "12.50", "discount": "0,00"}}, DANFE_KINDS, printed)
+    assert [f["bucket"] for f in fields] == ["hallucination", "correct"]

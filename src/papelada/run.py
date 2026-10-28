@@ -79,6 +79,18 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
             status = completion.error or f"correct {buckets.count('correct')}/{len(buckets)}, hallucinated {buckets.count('hallucination')}"
             print(f"{sample_dir.name} {level}: {status}", flush=True)
 
+    failures = []
+
+    def safe(task) -> None:
+        # One bad task must not take down a run that has already paid for other calls.
+        try:
+            one(task)
+        except Exception as e:  # noqa: BLE001
+            failures.append(task)
+            print(f"{task[0].name} {task[2]}: FAILED {type(e).__name__}: {e}", flush=True)
+
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        list(pool.map(one, tasks))
+        list(pool.map(safe, tasks))
+    if failures:
+        print(f"{len(failures)} of {len(tasks)} tasks failed and are missing from {out_file}", flush=True)
     return out_file
