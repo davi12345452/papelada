@@ -46,6 +46,7 @@ def test_rounds_and_offices(samples):
 def test_gold_is_printed_and_traps_exist(samples):
     for sample in samples:
         page = "\n".join(sample.meta["printed_text"])
+        assert sample.gold["state"] in sample.meta["printed_text"]  # the UF is printed, not only the state name
         for contest in sample.gold["contests"]:
             for c in contest["candidates"]:
                 assert f"{c['number']} {c['name']}" in page

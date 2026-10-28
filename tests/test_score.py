@@ -134,3 +134,11 @@ def test_substitution_bucket(monkeypatch):
     fields = score_fields(gold, {"payee": {"name": "Pirenópolis"}, "amount": "10.01"}, FIELD_KINDS)
     buckets = {f["path"]: f["bucket"] for f in fields}
     assert buckets == {"payee.name": "substitution", "amount": "wrong"}  # numbers are never substitutions
+
+
+def test_small_numbers_are_not_misattribution():
+    from papelada.doctypes.voting_bulletin import FIELD_KINDS as BU_KINDS
+
+    gold = {"turnout": 199, "absent": 83}
+    fields = score_fields(gold, {"turnout": 8, "absent": 282}, BU_KINDS, ["8", "282", "Eleitores aptos"])
+    assert [f["bucket"] for f in fields] == ["wrong", "misattribution"]

@@ -211,6 +211,7 @@ def _blocks(gold: dict, rng: random.Random, election_date: date) -> list[tuple]:
         ("subtitle", gold["election"]),
         ("subtitle", f"{gold['round']}º Turno ({election_date:%d/%m/%Y})"),
         ("rule",),
+        ("field", "UF", uf),
         ("field", "Município", f"{gold['municipality_code']} {gold['municipality'].upper()}"),
         ("field", "Zona Eleitoral", f"{gold['zone']:04d}"),
         ("field", "Seção Eleitoral", f"{gold['section']:04d}"),

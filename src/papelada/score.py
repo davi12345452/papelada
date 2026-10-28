@@ -149,6 +149,8 @@ class _Printed:
     def contains(self, value, kind: str) -> bool:
         if not self.texts or isinstance(value, (dict, list)):
             return False
+        if kind in ("number", "money") and len(re.sub(r"\D", "", str(value)).lstrip("0")) < 3:
+            return False  # small numbers appear all over a page; matching one proves nothing
         for k in {kind, "text"}:
             if k not in self.cache:
                 self.cache[k] = {_strip_accents(NORMALIZERS[k](t)) for t in self.texts}
