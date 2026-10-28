@@ -77,7 +77,7 @@ Misattribution separates reading the wrong part of the page (a footer put in the
 
 Substitution flags a model that could not read the print and wrote something plausible instead ("Pereira" → "Pirenópolis"). It uses a lexicon of the 50k most frequent pt-BR words (FrequencyWords, CC BY-SA 4.0) and IBGE municipalities, downloaded with `papelada fetch-lexicon` into `data/lexicon/` and never committed. Only text fields, and only words of four or more letters, count.
 
-Table rows are paired with gold rows by matching cells (a skipped row does not shift the rest); each gold cell is scored as above and each predicted row beyond the gold rows counts once as an extra row.
+Table rows are paired with gold rows by matching cells (a skipped row does not shift the rest); each gold cell is scored as above and each unpaired predicted row counts once as an extra row.
 
 Reported per model, document type and degradation level: field accuracy (strict and accent-lenient), hallucination rate (over absent fields), misattribution rate, omission and wrong rates (over present fields), trap accuracy, table cell accuracy, extra rows, schema validity on first try, cost per document and median latency.
 
