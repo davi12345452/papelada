@@ -45,4 +45,4 @@ uv run pytest
 
 ## Status
 
-Early. Generators for PIX receipts and DANFE, the runner and the scoring work. Voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+Early. Generators for PIX receipts and DANFE, the runner and the scoring work; first results in [docs/results-2026-10-28.md](docs/results-2026-10-28.md). Voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
