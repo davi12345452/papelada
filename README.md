@@ -34,6 +34,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 uv sync
 uv run papelada generate pix_receipt --n 24 --seed 0 --out data/sample
 uv run papelada generate danfe --n 12 --seed 0 --out data/sample
+uv run papelada generate voting_bulletin --n 12 --seed 0 --out data/sample
 uv run papelada fetch-lexicon   # word and place lists for the substitution metric
 
 # Models are "<provider>:<model id>". Keys come from the environment or a gitignored .env:
@@ -46,4 +47,10 @@ uv run pytest
 
 ## Status
 
-Early. Generators for PIX receipts and DANFE, the runner and the scoring work; first results in [docs/results-2026-10-28.md](docs/results-2026-10-28.md). Voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+Early. Generators for PIX receipts, DANFE and voting bulletins, the runner and the scoring work; first results in [docs/results-2026-10-28.md](docs/results-2026-10-28.md). See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+
+## Data sources
+
+- Municipalities: [IBGE localities API](https://servicodados.ibge.gov.br/api/docs/localidades), public data, vendored in `src/papelada/data/municipalities.csv`.
+- Word frequencies for the substitution metric: [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave (CC BY-SA 4.0), downloaded on demand, not redistributed.
+- Names, companies and streets in generated documents are fake (Faker `pt_BR` and fixed lists). Parties and candidates on voting bulletins are fictional.

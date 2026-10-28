@@ -119,5 +119,6 @@ A reply that cannot be parsed as JSON is scored as an empty prediction: it lower
 ## Roadmap
 
 - **v0** — 3 document types, 3 levels, first results
+- **v0.2** — voting bulletins (done), real places in addresses (done)
 - **v1** — more types: boleto, payslip (holerite), receipt (cupom fiscal), official gazette tables (Diário Oficial)
 - **v2** — handwriting: filled forms, medical prescriptions
