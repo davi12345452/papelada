@@ -113,3 +113,24 @@ def test_misread_of_the_right_cell_is_wrong_not_misattribution():
     gold = {"items": [{"description": "FEIJAO CARIOCA 1KG"}]}
     fields = score_fields(gold, {"items": [{"description": "FEIJÃO CARIOCA 1KG"}]}, DANFE_KINDS, ["FEIJAO CARIOCA 1KG"])
     assert fields[0]["bucket"] == "wrong" and fields[0]["lenient_correct"]
+
+
+def test_substitution_needs_a_real_word_not_on_the_page():
+    from papelada import lexicon
+
+    words = frozenset({"pirenopolis", "varzea", "mata", "benedito", "pereira", "barras"})
+    assert lexicon.is_substitution("Pereira", "Pirenópolis", words)
+    assert lexicon.is_substitution("Viana da Mata", "Várzea da Mata", words)
+    assert not lexicon.is_substitution("CARNE BOVINA PATINHO", "CARNE BOVINA PATRINHO", words)  # misread
+    assert not lexicon.is_substitution("Ana Liz da Cunha", "Ana Liz de Cunha", words)  # short word
+    assert not lexicon.is_substitution("Pereira", "Pirenópolis", frozenset())  # no lexicon, no claim
+
+
+def test_substitution_bucket(monkeypatch):
+    from papelada import lexicon
+
+    monkeypatch.setattr(lexicon, "load", lambda: frozenset({"pirenopolis"}))
+    gold = {"payee": {"name": "Pereira"}, "amount": "10.00"}
+    fields = score_fields(gold, {"payee": {"name": "Pirenópolis"}, "amount": "10.01"}, FIELD_KINDS)
+    buckets = {f["path"]: f["bucket"] for f in fields}
+    assert buckets == {"payee.name": "substitution", "amount": "wrong"}  # numbers are never substitutions

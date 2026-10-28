@@ -34,6 +34,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 uv sync
 uv run papelada generate pix_receipt --n 24 --seed 0 --out data/sample
 uv run papelada generate danfe --n 12 --seed 0 --out data/sample
+uv run papelada fetch-lexicon   # word and place lists for the substitution metric
 
 # Models are "<provider>:<model id>". Keys come from the environment or a gitignored .env:
 # openrouter (OPENROUTER_API_KEY), google (GOOGLE_API_KEY)

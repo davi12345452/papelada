@@ -5,6 +5,7 @@ Each gold leaf falls into one bucket:
     gold value, same value                      -> correct
     gold value, null/missing                    -> omission
     gold value, other text printed on the page  -> misattribution
+    gold value, a different real word or place  -> substitution
     gold value, anything else                   -> wrong
     gold null,  null/missing                    -> correct
     gold null,  text printed on the page        -> misattribution
@@ -13,6 +14,11 @@ Each gold leaf falls into one bucket:
 "Misattribution" separates reading the wrong part of the page (a footer put in the
 description, the payer's CPF in the payee's field) from inventing a value. It needs
 the document's printed text, which the generator records in meta.json.
+
+"Substitution" is a wrong text field where the model wrote a real word or Brazilian
+place that is not on the page ("Pereira" -> "Pirenópolis"): the model could not read
+the print and filled in something plausible. It needs the lexicon (papelada.lexicon);
+without it these count as wrong.
 
 Table rows are paired with gold rows by content (see _align), so a skipped row does
 not shift the rest. Predicted rows left unpaired are reported once each as "extra_row".
@@ -26,6 +32,8 @@ import json
 import re
 import unicodedata
 from decimal import Decimal, InvalidOperation
+
+from papelada import lexicon
 
 # --- Normalization -----------------------------------------------------------
 
@@ -258,8 +266,12 @@ def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str], printed: 
                 bucket = "correct"
             elif _loose(gold_value) == _loose(pred_value):
                 bucket = "wrong"  # the right cell, misread: added accent or changed case
+            elif on_page.contains(pred_value, kind):
+                bucket = "misattribution"
+            elif kind == "text" and lexicon.is_substitution(str(gold_value), str(pred_value)):
+                bucket = "substitution"
             else:
-                bucket = "misattribution" if on_page.contains(pred_value, kind) else "wrong"
+                bucket = "wrong"
         results.append({
             "path": path,
             "bucket": bucket,

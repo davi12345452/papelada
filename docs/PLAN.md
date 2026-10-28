@@ -67,6 +67,7 @@ Per field, each prediction falls into exactly one bucket:
 | value | same value | correct |
 | value | `null` | omission |
 | value | other text printed on the page | misattribution |
+| value | a different real word or place, not on the page | substitution |
 | value | anything else | wrong |
 | `null` | `null` | correct |
 | `null` | text printed on the page | misattribution |
@@ -74,7 +75,9 @@ Per field, each prediction falls into exactly one bucket:
 
 Misattribution separates reading the wrong part of the page (a footer put in the description, the payer's CPF in the payee's field) from inventing a value. The generator records every string it prints in `meta.json`; a prediction counts as printed text if it matches one after normalization, ignoring accents.
 
-Table rows are aligned by position; each gold cell is scored as above and each predicted row beyond the gold rows counts once as an extra row.
+Substitution flags a model that could not read the print and wrote something plausible instead ("Pereira" → "Pirenópolis"). It uses a lexicon of the 50k most frequent pt-BR words (FrequencyWords, CC BY-SA 4.0) and IBGE municipalities, downloaded with `papelada fetch-lexicon` into `data/lexicon/` and never committed. Only text fields, and only words of four or more letters, count.
+
+Table rows are paired with gold rows by matching cells (a skipped row does not shift the rest); each gold cell is scored as above and each predicted row beyond the gold rows counts once as an extra row.
 
 Reported per model, document type and degradation level: field accuracy (strict and accent-lenient), hallucination rate (over absent fields), misattribution rate, omission and wrong rates (over present fields), trap accuracy, table cell accuracy, extra rows, schema validity on first try, cost per document and median latency.
 

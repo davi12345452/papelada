@@ -74,6 +74,8 @@ def main() -> None:
     res.add_argument("runs", type=Path, nargs="+")
     res.add_argument("--data", type=Path, default=Path("data/sample"))
 
+    sub.add_parser("fetch-lexicon", help="download the word and place lists used to detect substitutions")
+
     rep = sub.add_parser("report", help="summarize run files")
     rep.add_argument("runs", type=Path, nargs="+")
     rep.add_argument("--fields", action="store_true", help="also show the fields that fail most")
@@ -97,6 +99,10 @@ def main() -> None:
         for path in args.runs:
             rescore(path, args.data)
             print(f"rescored {path}")
+    elif args.command == "fetch-lexicon":
+        from papelada.lexicon import fetch
+
+        print(f"wrote {fetch()}")
     elif args.command == "report":
         from papelada.report import report, worst_fields
 

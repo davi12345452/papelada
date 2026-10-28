@@ -10,7 +10,7 @@ from pathlib import Path
 
 COLUMNS = [
     "model", "doc type", "level", "docs", "accuracy", "accuracy (lenient)", "hallucination",
-    "misattribution", "omission", "wrong", "traps", "table cells", "extra rows", "schema valid",
+    "misattribution", "substitution", "omission", "wrong", "traps", "table cells", "extra rows", "schema valid",
     "errors", "cost/doc (USD)", "p50 latency (s)",
 ]
 
@@ -40,6 +40,7 @@ def summarize(records: list[dict]) -> dict:
         "hallucination": _rate(count(gold_null, "hallucination"), len(gold_null)),
         "misattribution": _rate(count(fields, "misattribution"), len(fields)),
         "omission": _rate(count(gold_value, "omission"), len(gold_value)),
+        "substitution": _rate(count(gold_value, "substitution"), len(gold_value)),
         "wrong": _rate(count(gold_value, "wrong"), len(gold_value)),
         "traps": _rate(count(trap_fields, "correct"), len(trap_fields)),
         "table cells": _rate(count(table_cells, "correct"), len(table_cells)),
@@ -73,7 +74,7 @@ def report(paths: list[Path], by_level: bool = True) -> str:
 
 def worst_fields(paths: list[Path], top: int = 12) -> str:
     """Which fields fail most, and how. Table rows are folded: items[3].total -> items[].total."""
-    buckets = ["correct", "wrong", "omission", "hallucination", "misattribution"]
+    buckets = ["correct", "wrong", "substitution", "omission", "hallucination", "misattribution"]
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for record in _load(paths):
         for field in record["fields"]:
