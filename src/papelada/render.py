@@ -106,7 +106,9 @@ def render(blocks: list[tuple], style: Style, scale: int = 2) -> Image.Image:
     s = _scaled(style, scale)
     content_width = s.width - 2 * s.margin
 
-    img = Image.new("RGB", (s.width, 6000), s.bg)
+    # Generous upper bound (a field may wrap to two lines); the image is cropped at the end.
+    per_block = max(s.title_size * 3, s.amount_size * 2, s.body_size * 2 + s.label_size) + 4 * s.line_gap
+    img = Image.new("RGB", (s.width, 2 * s.margin + len(blocks) * per_block), s.bg)
     draw = ImageDraw.Draw(img)
     y = s.margin
 

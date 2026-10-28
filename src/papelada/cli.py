@@ -68,6 +68,7 @@ def main() -> None:
     run_cmd.add_argument("--levels", default=",".join(LEVELS))
     run_cmd.add_argument("--limit", type=int, help="only the first N samples")
     run_cmd.add_argument("--workers", type=int, default=2)
+    run_cmd.add_argument("--types", help="comma-separated document types (default: all)")
     run_cmd.add_argument("--out", type=Path, default=Path("results/runs"))
 
     res = sub.add_parser("rescore", help="recompute scores of run files from stored replies")
@@ -91,7 +92,8 @@ def main() -> None:
     elif args.command == "run":
         from papelada.run import run
 
-        out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers)
+        doc_types = args.types.split(",") if args.types else None
+        out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers, doc_types)
         print(f"\n{out_file}")
     elif args.command == "rescore":
         from papelada.run import rescore

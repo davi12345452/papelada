@@ -15,7 +15,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from faker import Faker
 from PIL import Image, ImageDraw
 
-from papelada import br
+from papelada import br, places
 from papelada.render import font, wrap
 
 DOC_TYPE = "danfe"
@@ -85,17 +85,6 @@ def _money(value: Decimal) -> str:
     return br.format_number(value, 2)
 
 
-def _address(fake: Faker, rng: random.Random, uf: str) -> dict:
-    return {
-        "street": fake.street_name(),
-        "number": str(rng.randint(1, 4999)),
-        "district": fake.bairro(),
-        "city": fake.city(),
-        "state": uf,
-        "zip_code": f"{rng.randint(1_000_000, 99_999_999):08d}",
-    }
-
-
 def generate(seed: int) -> Sample:
     rng = random.Random(seed)
     fake = Faker("pt_BR")
@@ -114,13 +103,13 @@ def generate(seed: int) -> Sample:
         "name": fake.company().upper(),
         "cnpj": issuer_cnpj,
         "state_registration": f"{rng.randint(10**8, 10**9 - 1)}{rng.randint(100, 999)}",
-        "address": _address(fake, rng, issuer_uf),
+        "address": places.address(rng, issuer_uf),
     }
     if rng.random() < 0.6:
         recipient = {"name": fake.company().upper(), "document": br.cnpj(rng)}
     else:
         recipient = {"name": fake.name().upper(), "document": br.cpf(rng)}
-    recipient["address"] = _address(fake, rng, recipient_uf)
+    recipient["address"] = places.address(rng, recipient_uf)
 
     # Blank boxes: the field exists on the form but is empty, so gold is null.
     absent = set()

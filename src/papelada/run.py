@@ -57,10 +57,13 @@ def rescore(path: Path, data_dir: Path) -> None:
     tmp.replace(path)
 
 
-def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | None = None, workers: int = 2) -> Path:
+def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | None = None, workers: int = 2,
+        doc_types: list[str] | None = None) -> Path:
     tasks = []
     for gold_path in sorted(data_dir.glob("*/*/gold.json"))[:limit]:
         meta = json.loads((gold_path.parent / "meta.json").read_text())
+        if doc_types and meta["doc_type"] not in doc_types:
+            continue
         for level in levels:
             if level in meta["images"]:
                 tasks.append((gold_path.parent, meta, level))
