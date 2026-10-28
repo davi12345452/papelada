@@ -69,7 +69,7 @@ class Style:
     line_gap: int = 8
 
 
-def _wrap(draw: ImageDraw.ImageDraw, text: str, fnt, max_width: int) -> list[str]:
+def wrap(draw: ImageDraw.ImageDraw, text: str, fnt, max_width: int) -> list[str]:
     """Greedy word wrap; words wider than the line (emails, UUIDs) break by character."""
     lines: list[str] = []
     current = ""
@@ -140,7 +140,7 @@ def render(blocks: list[tuple], style: Style, scale: int = 2) -> Image.Image:
             else:
                 text_line(block[1], fnt, s.fg, s.align_title)
         elif kind == "subtitle":
-            for line in _wrap(draw, block[1], font(regular, s.label_size), content_width):
+            for line in wrap(draw, block[1], font(regular, s.label_size), content_width):
                 text_line(line, font(regular, s.label_size), s.muted, s.align_title)
         elif kind == "amount":
             text_line(block[1], font(bold, s.amount_size), s.fg, s.align_title)
@@ -153,7 +153,7 @@ def render(blocks: list[tuple], style: Style, scale: int = 2) -> Image.Image:
             label_font, value_font = font(regular, s.label_size), font(regular, s.body_size)
             if s.field_mode == "stacked":
                 text_line(label, label_font, s.muted)
-                for line in _wrap(draw, value, value_font, content_width):
+                for line in wrap(draw, value, value_font, content_width):
                     text_line(line, value_font, s.fg)
                 y += s.line_gap
             else:
@@ -164,10 +164,10 @@ def render(blocks: list[tuple], style: Style, scale: int = 2) -> Image.Image:
                     text_line(value, value_font, s.fg, "right")
                 else:
                     y += s.body_size + s.line_gap
-                    for line in _wrap(draw, value, value_font, content_width):
+                    for line in wrap(draw, value, value_font, content_width):
                         text_line(line, value_font, s.fg, "right")
         elif kind == "note":
-            for line in _wrap(draw, block[1], font(regular, s.label_size - 2), content_width):
+            for line in wrap(draw, block[1], font(regular, s.label_size - 2), content_width):
                 text_line(line, font(regular, s.label_size - 2), s.muted, s.align_title)
         elif kind == "rule":
             rule()
@@ -177,3 +177,8 @@ def render(blocks: list[tuple], style: Style, scale: int = 2) -> Image.Image:
             raise ValueError(f"Unknown block kind: {kind}")
 
     return img.crop((0, 0, s.width, y + s.margin))
+
+
+def printed_text(blocks: list[tuple]) -> list[str]:
+    """Every string a block puts on the page; used to tell misattribution from hallucination."""
+    return [part for block in blocks for part in block[1:] if isinstance(part, str) and part.strip()]

@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 from faker import Faker
 from PIL import Image
 
-from papelada import br
-from papelada.render import Style, render
+from papelada import br, traps
+from papelada.render import Style, printed_text, render
 
 DOC_TYPE = "pix_receipt"
 
@@ -33,7 +33,7 @@ INSTITUTIONS = [
 
 DESCRIPTIONS = [
     "aluguel outubro", "pizza de sexta", "racha do churrasco", "mensalidade academia",
-    "conserto da bike", "parcela 3/10", "material escolar", "presente de aniversário",
+    "parcela 3/10", "material escolar", "presente de aniversário",
     "conta de luz", "frete", "uber de ontem", "ingresso show",
 ]
 
@@ -61,6 +61,9 @@ OPTIONAL = {
 }
 # Agency and account are hidden together, per party.
 OPTIONAL_ACCOUNT = 0.4
+
+TRAP_NAME = 0.4  # chance each person gets an uncommon first-name spelling
+TRAP_DESCRIPTION = 0.5  # chance a present description is a trap
 
 
 @dataclass
@@ -102,7 +105,7 @@ def generate(seed: int) -> Sample:
     fake = Faker("pt_BR")
     fake.seed_instance(seed)
 
-    values, key_type, dt = _fake_values(rng, fake)
+    values, key_type, dt, trap_paths = _fake_values(rng, fake)
     hidden = {path for path, p in OPTIONAL.items() if rng.random() < p}
     for party in ("payer", "payee"):
         if rng.random() < OPTIONAL_ACCOUNT:
@@ -120,6 +123,8 @@ def generate(seed: int) -> Sample:
             "layout": layout_name,
             "payee_key_type": key_type,
             "absent_fields": sorted(_all_paths() - builder.shown.keys()),
+            "traps": sorted(p for p in trap_paths if p in builder.shown),
+            "printed_text": printed_text(builder.blocks),
         },
         image=render(builder.blocks, style),
     )
@@ -133,18 +138,26 @@ def _fake_values(rng: random.Random, fake: Faker):
     cents = max(cents, 100)
     dt = datetime(2025, 1, 1) + timedelta(seconds=rng.randrange(0, 640 * 24 * 3600))
 
+    trap_paths: set[str] = set()
+
+    def person(path: str) -> str:
+        if rng.random() < TRAP_NAME:
+            trap_paths.add(path)
+            return f"{rng.choice(traps.NAMES)} {fake.last_name()}"
+        return fake.name()
+
     payer_inst, payee_inst = rng.choice(INSTITUTIONS), rng.choice(INSTITUTIONS)
     payer_cpf = br.cpf(rng)
     values: dict[str, tuple[object, str]] = {
         "amount": (br.decimal_str(cents), br.brl(cents)),
-        "payer.name": (fake.name(), ""),
+        "payer.name": (person("payer.name"), ""),
         "payer.document": (br.mask_cpf(payer_cpf), ""),
         "payer.institution": (payer_inst[0], ""),
     }
 
     if rng.random() < 0.75:
         payee_cpf = br.cpf(rng)
-        values["payee.name"] = (fake.name(), "")
+        values["payee.name"] = (person("payee.name"), "")
         values["payee.document"] = (br.mask_cpf(payee_cpf), "")
         key_type = rng.choice(["email", "phone", "cpf", "random"])
     else:
@@ -160,7 +173,10 @@ def _fake_values(rng: random.Random, fake: Faker):
         values[f"{party}.agency"] = (agency, "")
         values[f"{party}.account"] = (account, "")
 
-    if key_type == "email":
+    if key_type == "email" and "payee.name" in trap_paths:
+        key = traps.email_from_name(values["payee.name"][0], rng)
+        trap_paths.add("payee_key")
+    elif key_type == "email":
         key = fake.free_email()
     elif key_type == "phone":
         key = f"+55 {rng.randint(11, 99)} 9{rng.randint(1000, 9999)}-{rng.randint(1000, 9999)}"
@@ -177,12 +193,16 @@ def _fake_values(rng: random.Random, fake: Faker):
     suffix = "".join(rng.choice(alphabet) for _ in range(11))
     values["end_to_end_id"] = (f"E{payer_inst[1]}{dt:%Y%m%d%H%M}{suffix}", "")
 
-    if rng.random() < 0.35:
-        values["description"] = (rng.choice(DESCRIPTIONS), "")
+    if rng.random() < 0.45:
+        if rng.random() < TRAP_DESCRIPTION:
+            values["description"] = (rng.choice(traps.DESCRIPTIONS), "")
+            trap_paths.add("description")
+        else:
+            values["description"] = (rng.choice(DESCRIPTIONS), "")
 
     # Unless set above, what is displayed is the gold value itself.
     values = {k: (g, d or str(g)) for k, (g, d) in values.items()}
-    return values, key_type, dt
+    return values, key_type, dt, trap_paths
 
 
 def _all_paths() -> set[str]:

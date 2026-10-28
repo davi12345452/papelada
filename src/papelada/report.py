@@ -1,15 +1,17 @@
-"""Aggregate run files into a markdown table per model and degradation level."""
+"""Aggregate run files into markdown tables per model, document type and degradation level."""
 
 from __future__ import annotations
 
 import json
+import re
 import statistics
 from collections import defaultdict
 from pathlib import Path
 
 COLUMNS = [
-    "model", "level", "docs", "accuracy", "accuracy (lenient)", "hallucination",
-    "omission", "wrong", "schema valid", "errors", "cost/doc (USD)", "p50 latency (s)",
+    "model", "doc type", "level", "docs", "accuracy", "accuracy (lenient)", "hallucination",
+    "misattribution", "omission", "wrong", "traps", "table cells", "extra rows", "schema valid",
+    "errors", "cost/doc (USD)", "p50 latency (s)",
 ]
 
 
@@ -17,19 +19,31 @@ def _rate(numerator: int, denominator: int) -> str:
     return f"{numerator / denominator:.1%}" if denominator else "-"
 
 
+def _is_trap(record: dict, path: str) -> bool:
+    return path in record.get("traps", [])
+
+
 def summarize(records: list[dict]) -> dict:
-    fields = [f for r in records for f in r["fields"]]
+    scored = [(r, f) for r in records for f in r["fields"] if f["bucket"] != "extra_row"]
+    fields = [f for _, f in scored]
     gold_null = [f for f in fields if f["gold"] is None]
     gold_value = [f for f in fields if f["gold"] is not None]
+    trap_fields = [f for r, f in scored if _is_trap(r, f["path"])]
+    table_cells = [f for f in fields if "[" in f["path"]]
     costs = [r["cost_usd"] for r in records if r["cost_usd"] is not None]
+    count = lambda items, bucket: sum(f["bucket"] == bucket for f in items)  # noqa: E731
     return {
         "docs": len(records),
-        "accuracy": _rate(sum(f["bucket"] == "correct" for f in fields), len(fields)),
+        "accuracy": _rate(count(fields, "correct"), len(fields)),
         "accuracy (lenient)": _rate(sum(f["lenient_correct"] for f in fields), len(fields)),
         # Rates over the fields where each kind of error is possible.
-        "hallucination": _rate(sum(f["bucket"] == "hallucination" for f in gold_null), len(gold_null)),
-        "omission": _rate(sum(f["bucket"] == "omission" for f in gold_value), len(gold_value)),
-        "wrong": _rate(sum(f["bucket"] == "wrong" for f in gold_value), len(gold_value)),
+        "hallucination": _rate(count(gold_null, "hallucination"), len(gold_null)),
+        "misattribution": _rate(count(fields, "misattribution"), len(fields)),
+        "omission": _rate(count(gold_value, "omission"), len(gold_value)),
+        "wrong": _rate(count(gold_value, "wrong"), len(gold_value)),
+        "traps": _rate(count(trap_fields, "correct"), len(trap_fields)),
+        "table cells": _rate(count(table_cells, "correct"), len(table_cells)),
+        "extra rows": sum(f["bucket"] == "extra_row" for r in records for f in r["fields"]),
         "schema valid": _rate(sum(r["schema_valid"] for r in records), len(records)),
         "errors": sum(r["error"] is not None for r in records),
         "cost/doc (USD)": f"{statistics.mean(costs):.5f}" if costs else "-",
@@ -37,30 +51,36 @@ def summarize(records: list[dict]) -> dict:
     }
 
 
-def report(paths: list[Path]) -> str:
-    groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
-    for path in paths:
-        for line in path.read_text().splitlines():
-            record = json.loads(line)
-            groups[(record["model"], record["level"])].append(record)
-            groups[(record["model"], "all")].append(record)
+def _load(paths: list[Path]) -> list[dict]:
+    return [json.loads(line) for path in paths for line in path.read_text().splitlines()]
+
+
+def report(paths: list[Path], by_level: bool = True) -> str:
+    groups: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
+    for record in _load(paths):
+        model, doc_type = record["model"], record["doc_type"]
+        if by_level:
+            groups[(model, doc_type, record["level"])].append(record)
+        groups[(model, doc_type, "all")].append(record)
+        groups[(model, "all", "all")].append(record)
 
     rows = ["| " + " | ".join(COLUMNS) + " |", "|" + "---|" * len(COLUMNS)]
-    for (model, level), records in sorted(groups.items()):
+    for (model, doc_type, level), records in sorted(groups.items()):
         summary = summarize(records)
-        rows.append("| " + " | ".join([model, level] + [str(summary[c]) for c in COLUMNS[2:]]) + " |")
+        rows.append("| " + " | ".join([model, doc_type, level] + [str(summary[c]) for c in COLUMNS[3:]]) + " |")
     return "\n".join(rows)
 
 
-def worst_fields(paths: list[Path], top: int = 10) -> str:
-    """Which fields fail most, and how. Useful for reading a single run."""
+def worst_fields(paths: list[Path], top: int = 12) -> str:
+    """Which fields fail most, and how. Table rows are folded: items[3].total -> items[].total."""
+    buckets = ["correct", "wrong", "omission", "hallucination", "misattribution"]
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    for path in paths:
-        for line in path.read_text().splitlines():
-            for field in json.loads(line)["fields"]:
-                counts[field["path"]][field["bucket"]] += 1
+    for record in _load(paths):
+        for field in record["fields"]:
+            if field["bucket"] != "extra_row":
+                counts[re.sub(r"\[\d+\]", "[]", field["path"])][field["bucket"]] += 1
     ranked = sorted(counts.items(), key=lambda kv: -sum(v for k, v in kv[1].items() if k != "correct"))
-    rows = ["| field | correct | wrong | omission | hallucination |", "|---|---|---|---|---|"]
+    rows = ["| field | " + " | ".join(buckets) + " |", "|---" * (len(buckets) + 1) + "|"]
     for path, c in ranked[:top]:
-        rows.append(f"| {path} | {c['correct']} | {c['wrong']} | {c['omission']} | {c['hallucination']} |")
+        rows.append(f"| {path} | " + " | ".join(str(c[b]) for b in buckets) + " |")
     return "\n".join(rows)

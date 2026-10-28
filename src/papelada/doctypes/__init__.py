@@ -2,9 +2,9 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from papelada.doctypes import pix_receipt
+from papelada.doctypes import danfe, pix_receipt
 
-DOC_TYPES = {pix_receipt.DOC_TYPE: pix_receipt}
+DOC_TYPES = {module.DOC_TYPE: module for module in (pix_receipt, danfe)}
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[3] / "schemas"
 

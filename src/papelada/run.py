@@ -68,7 +68,8 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
             "output_tokens": completion.output_tokens,
             "cost_usd": completion.cost_usd,
             "error": completion.error,
-            "fields": score_fields(gold, pred, DOC_TYPES[doc_type].FIELD_KINDS),
+            "traps": meta.get("traps", []),
+            "fields": score_fields(gold, pred, DOC_TYPES[doc_type].FIELD_KINDS, meta.get("printed_text")),
             "raw": completion.text,
         }
         with lock:

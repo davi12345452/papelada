@@ -74,3 +74,39 @@ def decimal_str(cents: int) -> str:
 
 
 MONTHS_PT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+
+
+# IBGE state codes used in NF-e access keys.
+UF_CODES = {
+    "SP": "35", "RJ": "33", "MG": "31", "RS": "43", "PR": "41", "SC": "42",
+    "BA": "29", "PE": "26", "CE": "23", "GO": "52", "DF": "53", "ES": "32",
+}
+
+
+def nfe_check_digit(first_43: str) -> int:
+    """Mod 11 with weights 2..9 cycling from the right, as in the NF-e manual."""
+    total = sum(int(d) * (2 + i % 8) for i, d in enumerate(reversed(first_43)))
+    remainder = total % 11
+    return 0 if remainder < 2 else 11 - remainder
+
+
+def nfe_access_key(uf: str, year: int, month: int, cnpj: str, series: int, number: int, rng: random.Random) -> str:
+    """44-digit access key: cUF AAMM CNPJ mod serie nNF tpEmis cNF cDV."""
+    random_code = f"{rng.randint(0, 99_999_999):08d}"
+    first_43 = f"{UF_CODES[uf]}{year % 100:02d}{month:02d}{cnpj}55{series:03d}{number:09d}1{random_code}"
+    return first_43 + str(nfe_check_digit(first_43))
+
+
+def is_valid_nfe_access_key(key: str) -> bool:
+    digits = "".join(c for c in key if c.isdigit())
+    return len(digits) == 44 and int(digits[-1]) == nfe_check_digit(digits[:43])
+
+
+def format_access_key(key: str) -> str:
+    return " ".join(key[i : i + 4] for i in range(0, 44, 4))
+
+
+def format_number(value, decimals: int) -> str:
+    """Brazilian number formatting: 1234.5 -> '1.234,50'."""
+    text = f"{value:,.{decimals}f}"
+    return text.replace(",", "X").replace(".", ",").replace("X", ".")

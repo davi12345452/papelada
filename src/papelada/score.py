@@ -2,11 +2,20 @@
 
 Each gold leaf falls into one bucket:
 
-    gold value, same value       -> correct
-    gold value, different value  -> wrong
-    gold value, null/missing     -> omission
-    gold null,  null/missing     -> correct
-    gold null,  any value        -> hallucination
+    gold value, same value                      -> correct
+    gold value, null/missing                    -> omission
+    gold value, other text printed on the page  -> misattribution
+    gold value, anything else                   -> wrong
+    gold null,  null/missing                    -> correct
+    gold null,  text printed on the page        -> misattribution
+    gold null,  anything else                   -> hallucination
+
+"Misattribution" separates reading the wrong part of the page (a footer put in the
+description, the payer's CPF in the payee's field) from inventing a value. It needs
+the document's printed text, which the generator records in meta.json.
+
+Lists (table rows) are aligned by position. Predicted rows beyond the gold rows are
+reported once each as "extra_row".
 
 Values are normalized by field kind before comparison (see NORMALIZERS).
 """
@@ -40,7 +49,12 @@ def _code(value) -> str:
     return re.sub(r"\s", "", str(value))
 
 
-def _money(value) -> str:
+def _decimal(value) -> Decimal | None:
+    """Parse Brazilian or international number formatting: '1.234,56', '1,234.56', '1234.56'."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return Decimal(str(value))
     text = re.sub(r"[^\d.,\-]", "", str(value))
     if "," in text and "." in text:
         if text.rfind(",") > text.rfind("."):  # 1.234,56
@@ -52,26 +66,52 @@ def _money(value) -> str:
     elif text.count(".") > 1 or re.search(r"\.\d{3}$", text):  # 1.234 or 1.234.567
         text = text.replace(".", "")
     try:
-        return str(Decimal(text).quantize(Decimal("0.01")))
+        return Decimal(text)
     except InvalidOperation:
-        return _text(value)
+        return None
+
+
+def _money(value) -> str:
+    number = _decimal(value)
+    return str(number.quantize(Decimal("0.01"))) if number is not None else _text(value)
+
+
+def _number(value) -> str:
+    """Quantities and document numbers: '000.012.345' == '12345', '2,0000' == '2'."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        number = Decimal(str(value))
+    else:
+        text = re.sub(r"[^\d.,\-]", "", str(value))
+        if "," in text:  # Brazilian formatting: 1.234,5678
+            text = text.replace(".", "").replace(",", ".")
+        elif text.count(".") > 1:  # dotted document number: 000.012.345
+            text = text.replace(".", "")
+        # A single dot is a decimal point, as the schemas ask: 12.345 kg is not 12345.
+        try:
+            number = Decimal(text)
+        except InvalidOperation:
+            return _text(value)
+    return format(number.normalize(), "f")
 
 
 def _datetime(value) -> str:
     digits = re.findall(r"\d+", str(value))
-    if len(digits) >= 5 and len(digits[0]) == 4:  # 2026-10-28T14:03[:12]
+    if len(digits) >= 3 and len(digits[0]) == 4:  # 2026-10-28[T14:03[:12]]
         parts = digits[:6]
-        return "-".join(parts[:3]) + "T" + ":".join(p.zfill(2) for p in parts[3:])
+        date = "-".join(p.zfill(2) for p in parts[:3])
+        return date + ("T" + ":".join(p.zfill(2) for p in parts[3:]) if len(parts) > 3 else "")
     return _text(value)
 
 
-NORMALIZERS = {"text": _text, "key": _key, "code": _code, "money": _money, "datetime": _datetime}
+NORMALIZERS = {
+    "text": _text, "key": _key, "code": _code, "money": _money, "number": _number, "datetime": _datetime,
+}
 
 
 def kind_for(path: str, kinds: dict[str, str]) -> str:
     if path in kinds:
         return kinds[path]
-    last = path.rsplit(".", 1)[-1]
+    last = re.sub(r"\[\d+\]", "", path).rsplit(".", 1)[-1]
     return kinds.get(f"*.{last}", "text")
 
 
@@ -85,47 +125,92 @@ def _same(gold, pred, kind: str) -> tuple[bool, bool]:
     return strict, strict or _strip_accents(g) == _strip_accents(p)
 
 
+class _Printed:
+    """Everything printed on the page, normalized lazily per field kind."""
+
+    def __init__(self, texts: list[str]):
+        self.texts = texts
+        self.cache: dict[str, set[str]] = {}
+
+    def contains(self, value, kind: str) -> bool:
+        if not self.texts or isinstance(value, (dict, list)):
+            return False
+        for k in {kind, "text"}:
+            if k not in self.cache:
+                self.cache[k] = {_strip_accents(NORMALIZERS[k](t)) for t in self.texts}
+            if _strip_accents(NORMALIZERS[k](value)) in self.cache[k]:
+                return True
+        return False
+
+
 # --- Scoring -----------------------------------------------------------------
 
 
 def leaves(obj, prefix: str = "") -> dict[str, object]:
-    """Flatten nested dicts into dotted paths. Lists are not used by the v0 PIX schema yet."""
+    """Flatten nested dicts and lists into paths like 'items[2].total'."""
     out: dict[str, object] = {}
-    for key, value in obj.items():
-        path = f"{prefix}{key}"
-        if isinstance(value, dict):
-            out.update(leaves(value, f"{path}."))
+    items = obj.items() if isinstance(obj, dict) else ((f"[{i}]", v) for i, v in enumerate(obj))
+    for key, value in items:
+        path = f"{prefix}{key}" if key.startswith("[") else f"{prefix}.{key}" if prefix else key
+        if isinstance(value, (dict, list)):
+            out.update(leaves(value, path))
         else:
             out[path] = value
     return out
 
 
 def lookup(obj, path: str):
-    for key in path.split("."):
-        if not isinstance(obj, dict):
-            return None
-        obj = obj.get(key)
+    for key, index in re.findall(r"([^.\[\]]+)|\[(\d+)\]", path):
+        if index:
+            if not isinstance(obj, list) or int(index) >= len(obj):
+                return None
+            obj = obj[int(index)]
+        else:
+            if not isinstance(obj, dict):
+                return None
+            obj = obj.get(key)
     return obj
+
+
+def _lists(obj, prefix: str = ""):
+    """Yield (path, list) for every list inside obj."""
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            path = f"{prefix}.{key}" if prefix else key
+            if isinstance(value, list):
+                yield path, value
+            yield from _lists(value, path)
+    elif isinstance(obj, list):
+        for i, value in enumerate(obj):
+            yield from _lists(value, f"{prefix}[{i}]")
 
 
 def _is_empty(value) -> bool:
     return value is None or (isinstance(value, str) and value.strip() in {"", "null", "N/A", "-"})
 
 
-def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str]) -> list[dict]:
+def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str], printed: list[str] | None = None) -> list[dict]:
     """Score every gold leaf. An unparseable prediction is scored as an empty one."""
     pred = pred or {}
+    on_page = _Printed(printed or [])
     results = []
     for path, gold_value in leaves(gold).items():
         pred_value = lookup(pred, path)
+        kind = kind_for(path, kinds)
         lenient = None
         if gold_value is None:
-            bucket = "correct" if _is_empty(pred_value) else "hallucination"
+            if _is_empty(pred_value):
+                bucket = "correct"
+            else:
+                bucket = "misattribution" if on_page.contains(pred_value, kind) else "hallucination"
         elif _is_empty(pred_value):
             bucket = "omission"
         else:
-            strict, lenient = _same(gold_value, pred_value, kind_for(path, kinds))
-            bucket = "correct" if strict else "wrong"
+            strict, lenient = _same(gold_value, pred_value, kind)
+            if strict:
+                bucket = "correct"
+            else:
+                bucket = "misattribution" if on_page.contains(pred_value, kind) else "wrong"
         results.append({
             "path": path,
             "bucket": bucket,
@@ -133,6 +218,15 @@ def score_fields(gold: dict, pred: dict | None, kinds: dict[str, str]) -> list[d
             "gold": gold_value,
             "pred": pred_value,
         })
+
+    for path, gold_rows in _lists(gold):
+        pred_rows = lookup(pred, path)
+        if isinstance(pred_rows, list):
+            for i in range(len(gold_rows), len(pred_rows)):
+                results.append({
+                    "path": f"{path}[{i}]", "bucket": "extra_row", "lenient_correct": False,
+                    "gold": None, "pred": pred_rows[i],
+                })
     return results
 
 
