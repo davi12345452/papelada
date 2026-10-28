@@ -85,3 +85,50 @@ def worst_fields(paths: list[Path], top: int = 12) -> str:
     for path, c in ranked[:top]:
         rows.append(f"| {path} | " + " | ".join(str(c[b]) for b in buckets) + " |")
     return "\n".join(rows)
+
+
+def _accuracy(records: list[dict]) -> float | None:
+    fields = [f for r in records for f in r["fields"] if f["bucket"] != "extra_row"]
+    return sum(f["bucket"] == "correct" for f in fields) / len(fields) if fields else None
+
+
+def leaderboard(paths: list[Path], samples: set[str] | None = None) -> str:
+    """One row per model: mean accuracy over document types, per-level accuracy, hallucination and cost.
+
+    The date is taken from the run file name, so a model added later shows when it was tested.
+    `samples` restricts every model to the same documents, e.g. those all models were scored on.
+    """
+    by_model: dict[str, list[dict]] = defaultdict(list)
+    tested: dict[str, str] = {}
+    for path in paths:
+        records = _load([path])
+        stamp = re.search(r"-(\d{4})(\d{2})(\d{2})-\d{6}", path.name)
+        for record in records:
+            if samples is not None and record["sample"] not in samples:
+                continue
+            by_model[record["model"]].append(record)
+            if stamp:
+                tested[record["model"]] = "-".join(stamp.groups())
+
+    def pct(value: float | None) -> str:
+        return f"{value:.1%}".rstrip("%") if value is not None else "-"
+
+    rows = []
+    for model, records in by_model.items():
+        cells, type_scores = [], []
+        for doc_type in ("pix_receipt", "danfe", "voting_bulletin"):
+            of_type = [r for r in records if r["doc_type"] == doc_type]
+            type_scores.append(_accuracy(of_type))
+            cells.append(" / ".join(pct(_accuracy([r for r in of_type if r["level"] == lvl])) for lvl in ("L0", "L1", "L2")))
+        scores = [s for s in type_scores if s is not None]
+        mean = sum(scores) / len(scores) if scores else 0.0
+        summary = summarize(records)
+        name = model.split(":", 1)[-1]
+        rows.append((mean, f"| `{name}` | **{pct(mean)}** | " + " | ".join(cells)
+                     + f" | {summary['hallucination']} | {float(summary['cost/doc (USD)']):.4f} | {tested.get(model, '-')} |"))
+
+    header = [
+        "| Model | Score | PIX L0 / L1 / L2 | DANFE L0 / L1 / L2 | Bulletin L0 / L1 / L2 | Hallucination | US$/doc | Tested |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    return "\n".join(header + [row for _, row in sorted(rows, key=lambda r: -r[0])])

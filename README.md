@@ -6,21 +6,35 @@
 
 Most document benchmarks are English and US-centric. Brazilian paperwork has its own formats (CNPJ, CPF, `R$ 1.234,56`, NF-e access keys, boletim de urna) and its own failure modes. This project measures them.
 
-## Latest results
+![The same invoice as a clean render (L0), a scan (L1) and a phone photo (L2)](docs/img/levels.jpg)
 
-Seven cheap, recent models via OpenRouter, October 2026. Accuracy per field; L0 is a clean render, L1 a scan, L2 a phone photo.
+## Leaderboard
 
-| Model | PIX | DANFE L0 / L1 / L2 | Bulletin L0 / L1 / L2 | US$/doc |
-|---|---|---|---|---|
-| `anthropic/claude-haiku-5.5` | 99.5 | 100.0 / 99.8 / **97.2** | 99.5 / 96.8 / 92.0 | 0.0016 |
-| `openai/gpt-6-luna` | 98.6 | 99.7 / 99.4 / 84.8 | 99.5 / 98.6 / 96.9 | **0.0011** |
-| `qwen/qwen3.8-27b` | 98.0 | 95.9 / 96.6 / 82.7 | 99.8 / 99.8 / **98.7** | 0.0039 |
-| `deepseek/deepseek-v4.1-flash-1017` | 99.0 | 99.5 / 99.2 / 81.2 | 99.3 / 99.4 / 95.8 | 0.0023 |
-| `minimax/minimax-m3.1-flash` | 98.9 | 99.2 / 96.4 / 80.1 | 97.9 / 86.9 / 89.7 | 0.0042 |
-| `nvidia/nemotron-3.5-super-vl` | 98.0 | 98.6 / 98.3 / 82.3 | 97.7 / 92.9 / 81.8 | 0.0032 |
-| `xiaomi/mimo-v2.6-flash` | 99.1 | 98.3 / 88.3 / 62.5 | 99.6 / 92.2 / 82.7 | 0.0028 |
+Set `v1`: synthetic PIX receipts, invoices (DANFE) and voting bulletins, each read at three levels — L0 clean render, L1 scan, L2 phone photo. Cells are field accuracy in %. **Score** is the mean over the three document types. Hallucination is the share of absent fields a model filled with something not printed on the page.
 
-What stands out: no model wins everything; clean documents are solved, photos are not; no model invented a value for an absent field, but under degradation models replace unreadable words with plausible real ones ("Pereira" → "Pirenópolis") and confuse Portuguese accents on uppercase print ("TETÊ" → "TETÉ"). Small samples — read [the full write-up](docs/results-2026-10-28.md) before drawing conclusions.
+<!-- leaderboard:start -->
+| Model | Score | PIX L0 / L1 / L2 | DANFE L0 / L1 / L2 | Bulletin L0 / L1 / L2 | Hallucination | US$/doc | Tested |
+|---|---|---|---|---|---|---|---|
+| `anthropic/claude-haiku-5.5` | **98.5** | 100.0 / 100.0 / 100.0 | 100.0 / 99.8 / 98.8 | 100.0 / 97.5 / 90.5 | 0.0% | 0.0015 | 2026-10-28 |
+| `openai/gpt-6-luna` | **98.0** | 98.9 / 98.9 / 98.9 | 99.7 / 99.6 / 88.6 | 99.9 / 99.9 / 97.8 | 0.0% | 0.0011 | 2026-10-28 |
+| `qwen/qwen3.8-27b` | **97.1** | 98.9 / 98.9 / 97.4 | 96.9 / 96.5 / 86.1 | 100.0 / 99.0 / 99.9 | 0.0% | 0.0051 | 2026-10-28 |
+| `deepseek/deepseek-v4.1-flash-1017` | **96.7** | 99.3 / 100.0 / 99.6 | 99.3 / 98.6 / 88.6 | 99.9 / 99.8 / 85.0 | 0.0% | 0.0025 | 2026-10-28 |
+| `minimax/minimax-m3.1-flash` | **95.4** | 99.6 / 98.9 / 98.9 | 99.1 / 97.9 / 83.5 | 98.0 / 92.7 / 89.6 | 0.9% | 0.0034 | 2026-10-28 |
+| `xiaomi/mimo-v2.6-flash` | **89.9** | 99.6 / 99.6 / 99.6 | 98.1 / 93.6 / 81.3 | 100.0 / 81.0 / 56.5 | 0.0% | 0.0029 | 2026-10-28 |
+| `nvidia/nemotron-3.5-super-vl` | **82.1** | 88.9 / 96.3 / 91.5 | 98.7 / 96.2 / 80.8 | 68.5 / 71.2 / 47.1 | 0.4% | 0.0032 | 2026-10-28 |
+<!-- leaderboard:end -->
+
+Scored on the 61 documents every model completed at all three levels (30 invoices, 18 PIX receipts, 13 bulletins); the first run lost some calls to an exhausted API balance, and those are left out rather than counted against the model. New models are added as they ship: each is run once on the same frozen set and scored on the same 61 documents, with the same prompt and scoring, so rows stay comparable. One run per model and a small sample — differences of a point or two are noise. Set `v1` seeds are not published; gold fingerprint `ec7e606612ad33b8`.
+
+What stands out:
+
+- **Clean documents are solved; photos are not.** Every model except Nemotron scores 97–100% on clean renders. On a phone photo of an invoice, all but Claude Haiku 5.5 (98.8%) fall to 81–89%.
+- **No model wins everything.** Haiku leads overall but drops to 90.5% on bulletin photos, which Qwen3.8 27B reads almost perfectly (99.9%).
+- **Hallucination is rare, but not zero.** On blurry invoices with a blank district box, MiniMax wrote a ZIP-like number into it and invented a nine-digit ZIP; Nemotron filled the same blank with a town name. No other model invented a value.
+- **Some failures are not about reading.** MiMo (9 times) and DeepSeek (once) reasoned until they hit 131k output tokens and returned nothing. Nemotron reads bulletins but copies party headers verbatim ("PIA - 74") and appends the party to candidate names, so it fails the format, not the print.
+- **Cheapest is near the top:** GPT-6 Luna costs US$ 0.0011 per document and ranks second.
+
+A first look on a smaller, public set (with a closer study of substitution and traps) is in [docs/results-2026-10-28.md](docs/results-2026-10-28.md).
 
 ## What it measures
 
@@ -63,12 +77,15 @@ uv run papelada report results/runs/*.jsonl --fields
 # Scoring changes can be applied to saved runs without calling models again
 uv run papelada rescore results/runs/*.jsonl
 
+# The README table
+uv run papelada leaderboard results/runs/*.jsonl --samples scored.txt  # optional: same documents for every model
+
 uv run pytest
 ```
 
 ## Status
 
-Early and opinionated. Three document types, one prompt, small samples. Planned: a handful of real public documents (TSE bulletins) as a realism check, larger samples, more document types (boleto, payslip, receipts), and handwriting.
+Early and opinionated. Three document types, one prompt, one run per model. How sets are frozen and models added: [docs/PLAN.md](docs/PLAN.md#frozen-sets). Planned: repeat runs to measure variance, a handful of real public documents (TSE bulletins) as a realism check, larger samples, more document types (boleto, payslip, receipts), and handwriting.
 
 ## Data sources
 

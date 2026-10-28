@@ -70,6 +70,7 @@ def main() -> None:
     run_cmd.add_argument("--workers", type=int, default=2)
     run_cmd.add_argument("--types", help="comma-separated document types (default: all)")
     run_cmd.add_argument("--out", type=Path, default=Path("results/runs"))
+    run_cmd.add_argument("--resume", type=Path, help="run file to complete: redo its failed calls and missing samples")
 
     res = sub.add_parser("rescore", help="recompute scores of run files from stored replies")
     res.add_argument("runs", type=Path, nargs="+")
@@ -80,6 +81,10 @@ def main() -> None:
     rep = sub.add_parser("report", help="summarize run files")
     rep.add_argument("runs", type=Path, nargs="+")
     rep.add_argument("--fields", action="store_true", help="also show the fields that fail most")
+
+    lb = sub.add_parser("leaderboard", help="one row per model, as in the README")
+    lb.add_argument("runs", type=Path, nargs="+")
+    lb.add_argument("--samples", type=Path, help="file with one sample name per line; score only those")
 
     args = parser.parse_args()
     levels = args.levels.split(",") if hasattr(args, "levels") else []
@@ -93,7 +98,7 @@ def main() -> None:
         from papelada.run import run
 
         doc_types = args.types.split(",") if args.types else None
-        out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers, doc_types)
+        out_file = run(args.model, args.data, levels, args.out, args.limit, args.workers, doc_types, args.resume)
         print(f"\n{out_file}")
     elif args.command == "rescore":
         from papelada.run import rescore
@@ -112,6 +117,11 @@ def main() -> None:
         if args.fields:
             print()
             print(worst_fields(args.runs))
+    elif args.command == "leaderboard":
+        from papelada.report import leaderboard
+
+        samples = set(args.samples.read_text().split()) if args.samples else None
+        print(leaderboard(args.runs, samples))
 
 
 if __name__ == "__main__":

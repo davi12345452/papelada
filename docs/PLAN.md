@@ -69,9 +69,7 @@ Per field, each prediction falls into exactly one bucket:
 | value | other text printed on the page | misattribution |
 | value | a different real word or place, not on the page | substitution |
 | value | anything else | wrong |
-| `null` | `null` | correct |
 | `null` | text printed on the page | misattribution |
-| `null` | anything else | **hallucination** |
 
 Misattribution separates reading the wrong part of the page (a footer put in the description, the payer's CPF in the payee's field) from inventing a value. The generator records every string it prints in `meta.json`; a prediction counts as printed text if it matches one after normalization, ignoring accents.
 
@@ -86,28 +84,32 @@ A reply that cannot be parsed as JSON is scored as an empty prediction: it lower
 ## Models and baselines
 
 - Multimodal LLMs via a single gateway (OpenRouter), same prompt, temperature 0, schema in the prompt.
-- Focus on **recent, cheap, open-weight models, plus two cheap closed references**: the ones you'd actually run on thousands of documents. Lineup is refreshed as new models ship. v0 (OpenRouter IDs, release date on OpenRouter, USD per 1M input/output tokens, Oct 2026):
-
-| Model | Released | Open weights | Price in/out |
-|---|---|---|---|
-| `minimax/minimax-m3.1-flash` | 2026-10-19 | to verify | 0.15 / 0.60 |
-| `deepseek/deepseek-v4.1-flash-1017` | 2026-10-17 | to verify | 0.15 / 0.60 |
-| `nvidia/nemotron-3.5-super-vl` | 2026-10-15 | reported | 0.15 / 0.50 |
-| `xiaomi/mimo-v2.6-flash` | 2026-09-21 | to verify | 0.14 / 0.28 |
-| `qwen/qwen3.8-27b` | 2026-08-14 | to verify (vision weights) | 0.039 / 1.25 |
-| `openai/gpt-6-luna` | 2026-09-22 | no, cheap closed reference | 0.10 / 0.50 |
-| `anthropic/claude-haiku-5.5` | 2026-10-07 | no, cheap closed reference | 0.10 / 0.50 |
-
+- Focus on **recent, cheap models, mostly open-weight, plus two cheap closed references** (GPT-6 Luna, Claude Haiku 5.5): the ones you'd actually run on thousands of documents. The current lineup is in the [README](../README.md#leaderboard).
+- **Models are run once, when they ship.** A new model is added to the leaderboard by running it on the current frozen set; earlier models are not re-run.
 - Dedicated OCR models (PaddleOCR-VL, GLM-OCR, MinerU) lead OmniDocBench but aren't on OpenRouter; they belong with the classic-pipeline baselines.
 - Free (`:free`) endpoints may let the provider train on inputs. They are fine for the public sample, never for the private scored set.
 - Classic pipelines as baselines: Tesseract + LLM, Docling + LLM.
-- Each sample is run 3× for models without deterministic output; variance is reported.
+- One run per model at temperature 0. Repeat runs to measure variance are planned; until then, treat differences of a few points as noise.
+
+## Frozen sets
+
+A leaderboard is only comparable if every model sees the same images, the same prompt and the same scoring. Each **set** pins all three:
+
+| Set | Documents | Generator | Prompt | Seeds | Status |
+|---|---|---|---|---|---|
+| `v1` | 90 generated (30 per type) × 3 levels; 61 scored | 0.2.1 | v0 | undisclosed | current |
+| `preview-2026-10` | 48 (24 PIX, 12 DANFE, 12 bulletins) × 3 levels | 0.0.x / 0.2.0 | v0 | 0–23, public | superseded, see [results](results-2026-10-28.md) |
+
+- Images are generated once and stored; they are never regenerated, since fonts come from the OS and pixels could change.
+- Any change to the generator, prompt or scoring that changes results opens a new set (`v2`) with its own table. Scoring-only fixes can be applied to every saved run with `papelada rescore`, so old rows stay comparable.
+- Set `v1` is scored on the 61 documents that all seven launch models completed at every level (the launch run ran out of API credit before finishing); models added later are scored on the same 61.
+- Each set's gold is fingerprinted (SHA-256 over its gold files, in sample order) and the prefix is published with the results.
 
 ## Contamination policy
 
 - Public: harness, generator, methodology, results, and samples (`samples/`, seeds from 900000).
 - Every sample is reproducible from its seed, so a seed is as good as the data. Scored sets use undisclosed seeds; results state which set they were run on.
-- The October 2026 results ran on seeds 0–23, which are public: treat them as a first look, not a protected leaderboard.
+- The first October 2026 results (`preview-2026-10`) ran on seeds 0–23, which are public; the leaderboard runs on set `v1`, whose seeds are not published.
 - Free (`:free`) endpoints may train on inputs and are never run on a private set.
 - Real-world documents only from public sources (e.g. TSE bulletins); never personal documents.
 
@@ -116,11 +118,11 @@ A reply that cannot be parsed as JSON is scored as an empty prediction: it lower
 - [x] Language for generator and harness: Python (managed with uv)
 - [ ] Bundle open-licensed fonts so renders are pixel-identical across machines
 - [x] License: MIT for code, CC BY 4.0 for generated samples
-- [ ] Results format and leaderboard page
+- [x] Leaderboard: a table in the README, one row per model, per frozen set
 
 ## Roadmap
 
 - **v0** — 3 document types, 3 levels, first results
 - **v0.2** — voting bulletins (done), real places in addresses (done)
-- **v1** — more types: boleto, payslip (holerite), receipt (cupom fiscal), official gazette tables (Diário Oficial)
-- **v2** — handwriting: filled forms, medical prescriptions
+- **v0.3** — more types: boleto, payslip (holerite), receipt (cupom fiscal), official gazette tables (Diário Oficial)
+- **v0.4** — handwriting: filled forms, medical prescriptions

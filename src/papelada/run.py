@@ -58,7 +58,7 @@ def rescore(path: Path, data_dir: Path) -> None:
 
 
 def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | None = None, workers: int = 2,
-        doc_types: list[str] | None = None) -> Path:
+        doc_types: list[str] | None = None, resume: Path | None = None) -> Path:
     tasks = []
     for gold_path in sorted(data_dir.glob("*/*/gold.json"))[:limit]:
         meta = json.loads((gold_path.parent / "meta.json").read_text())
@@ -70,9 +70,20 @@ def run(model: str, data_dir: Path, levels: list[str], out: Path, limit: int | N
     if not tasks:
         raise SystemExit(f"No samples found under {data_dir}")
 
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out.mkdir(parents=True, exist_ok=True)
-    out_file = out / f"{re.sub(r'[^A-Za-z0-9._-]+', '_', model)}-{stamp}.jsonl"
+    if resume:
+        # Keep the records that got a reply; drop failed calls (e.g. out of credits) and redo only those.
+        kept = [r for r in map(json.loads, resume.read_text().splitlines()) if r["error"] is None]
+        if any(r["model"] != model for r in kept):
+            raise SystemExit(f"{resume} holds another model's run")
+        resume.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in kept))
+        done = {(r["sample"], r["level"]) for r in kept}
+        tasks = [t for t in tasks if (t[0].name, t[2]) not in done]
+        out_file = resume
+        print(f"resuming {resume}: {len(kept)} kept, {len(tasks)} to run", flush=True)
+    else:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        out.mkdir(parents=True, exist_ok=True)
+        out_file = out / f"{re.sub(r'[^A-Za-z0-9._-]+', '_', model)}-{stamp}.jsonl"
     lock = threading.Lock()
 
     def one(task) -> None:
