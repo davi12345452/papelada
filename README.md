@@ -8,9 +8,11 @@ Most document benchmarks are English and US-centric. Brazilian paperwork has its
 
 ## What it measures
 
-- **Field accuracy** — after normalization, so `123.456.789-09` and `12345678909` are the same CPF. Format errors and value errors are reported separately.
-- **Table accuracy** — cell-level scoring for line items and tabular sections.
-- **Hallucination rate** — the model fills a field that does not exist in the document. This is the headline metric.
+- **Field accuracy** — after normalization, so `123.456.789-09` and `12345678909` are the same CPF.
+- **Table accuracy** — cell-level scoring for invoice line items.
+- **Hallucination rate** — the model fills a field that does not exist in the document with something not printed anywhere on it. This is the headline metric.
+- **Misattribution** — the model copies real text from the wrong place: a footer into the description, the payer's CPF into the payee's field.
+- **Trap accuracy** — text a model is tempted to "fix": uncommon name spellings (Thyago, Uóxinton), homophones (conserto/concerto), typos and slang as people actually type them.
 - **Schema validity** — valid JSON matching the schema on the first try.
 - **Cost and latency** per document.
 
@@ -30,10 +32,12 @@ Requires [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync
-uv run papelada generate pix_receipt --n 12 --seed 0 --out data/sample
+uv run papelada generate pix_receipt --n 24 --seed 0 --out data/sample
+uv run papelada generate danfe --n 12 --seed 0 --out data/sample
 
-# Models are "<provider>:<model id>"; providers: openrouter (OPENROUTER_API_KEY), google (GOOGLE_API_KEY)
-uv run papelada run openrouter:google/gemini-2.5-flash-lite --data data/sample
+# Models are "<provider>:<model id>". Keys come from the environment or a gitignored .env:
+# openrouter (OPENROUTER_API_KEY), google (GOOGLE_API_KEY)
+uv run papelada run openrouter:deepseek/deepseek-v4.1-flash-1017 --data data/sample
 uv run papelada report results/runs/*.jsonl --fields
 
 uv run pytest
@@ -41,4 +45,4 @@ uv run pytest
 
 ## Status
 
-Early design. The PIX receipt generator, the runner and field-level scoring work; DANFE and voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+Early. Generators for PIX receipts and DANFE, the runner and the scoring work. Voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.

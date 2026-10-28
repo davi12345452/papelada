@@ -36,7 +36,20 @@ Every sample is reproducible from its seed (fonts are resolved from the OS, so p
 
 ### Optional fields
 
-To measure hallucination, each layout randomly omits optional fields (e.g. PIX description, payer document, freight). The gold value becomes `null`, and any non-null prediction counts as a hallucination.
+To measure hallucination, each layout randomly omits optional fields (e.g. PIX description, payer document) and the DANFE leaves some boxes blank (recipient district, ZIP code). The gold value becomes `null`.
+
+### Language-prior traps
+
+Models tend to read what they expect instead of what is printed: in the first runs, several wrote "concerto da bike" where the receipt said "conserto", or "bryan" for "brayan". The generator plants such text on purpose (`src/papelada/traps.py`):
+
+- uncommon Brazilian first-name spellings (Thyago, Uóxinton, Mykaelly…) and emails derived from them
+- payer messages with homophones used correctly (conserto/concerto, sessão/cessão), typos ("almoso", "acadmia") and slang ("vlw pela carona")
+
+Fields holding a trap are listed in `meta.json` and reported as a separate accuracy.
+
+### Distractors
+
+The DANFE carries every box a real one has, including numbers that look like targets: authorization protocol, installment values and due dates, carrier CNPJ, per-item ICMS. Reading the wrong box is scored as misattribution.
 
 ## Scoring
 
@@ -52,14 +65,20 @@ Per field, each prediction falls into exactly one bucket:
 | Gold | Prediction | Bucket |
 |---|---|---|
 | value | same value | correct |
-| value | different value | wrong |
 | value | `null` | omission |
+| value | other text printed on the page | misattribution |
+| value | anything else | wrong |
 | `null` | `null` | correct |
-| `null` | value | **hallucination** |
+| `null` | text printed on the page | misattribution |
+| `null` | anything else | **hallucination** |
 
-Tables are scored cell by cell after aligning rows (by order, falling back to best match on description). Missing and extra rows are counted separately.
+Misattribution separates reading the wrong part of the page (a footer put in the description, the payer's CPF in the payee's field) from inventing a value. The generator records every string it prints in `meta.json`; a prediction counts as printed text if it matches one after normalization, ignoring accents.
 
-Reported per model: field accuracy, hallucination rate, omission rate, table cell F1, schema validity on first try, cost per document, p50/p95 latency. All metrics are also broken down by document type and degradation level.
+Table rows are aligned by position; each gold cell is scored as above and each predicted row beyond the gold rows counts once as an extra row.
+
+Reported per model, document type and degradation level: field accuracy (strict and accent-lenient), hallucination rate (over absent fields), misattribution rate, omission and wrong rates (over present fields), trap accuracy, table cell accuracy, extra rows, schema validity on first try, cost per document and median latency.
+
+A reply that cannot be parsed as JSON is scored as an empty prediction: it lowers accuracy through omissions, never inflates hallucination, and shows up in schema validity.
 
 ## Models and baselines
 
