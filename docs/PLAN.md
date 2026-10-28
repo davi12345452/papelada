@@ -64,7 +64,7 @@ Reported per model: field accuracy, hallucination rate, omission rate, table cel
 ## Models and baselines
 
 - Multimodal LLMs via a single gateway (OpenRouter), same prompt, temperature 0, schema in the prompt.
-- Focus on **recent, cheap and mostly open-weight models**: the ones you'd actually run on thousands of documents. Lineup is refreshed as new models ship. v0 (OpenRouter IDs, release date on OpenRouter, USD per 1M input/output tokens, Oct 2026):
+- Focus on **recent, cheap, open-weight models**: the ones you'd actually run on thousands of documents. Lineup is refreshed as new models ship. v0 (OpenRouter IDs, release date on OpenRouter, USD per 1M input/output tokens, Oct 2026):
 
 | Model | Released | Open weights | Price in/out |
 |---|---|---|---|
@@ -73,8 +73,6 @@ Reported per model: field accuracy, hallucination rate, omission rate, table cel
 | `nvidia/nemotron-3.5-super-vl` | 2026-10-15 | reported | 0.15 / 0.50 |
 | `xiaomi/mimo-v2.6-flash` | 2026-09-21 | to verify | 0.14 / 0.28 |
 | `qwen/qwen3.8-27b` | 2026-08-14 | to verify (vision weights) | 0.039 / 1.25 |
-| `google/gemma-4-31b-it` | 2026-04 | yes, Apache 2.0 | 0.20 / 0.40 |
-| `google/gemini-3.5-flash-lite` | 2026-07-21 | no, cheap closed reference | 0.30 / 2.50 |
 
 - Dedicated OCR models (PaddleOCR-VL, GLM-OCR, MinerU) lead OmniDocBench but aren't on OpenRouter; they belong with the classic-pipeline baselines.
 - Free (`:free`) endpoints may let the provider train on inputs. They are fine for the public sample, never for the private scored set.
