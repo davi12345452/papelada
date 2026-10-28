@@ -22,6 +22,20 @@ PROVIDERS = {
 
 RETRY_STATUS = {408, 429, 500, 502, 503, 504}
 
+ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+
+def _api_key(name: str) -> str | None:
+    """Environment first, then KEY=VALUE lines in the repo's .env (gitignored)."""
+    if os.environ.get(name):
+        return os.environ[name]
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text().splitlines():
+            key, sep, value = line.partition("=")
+            if sep and key.strip() == name:
+                return value.strip().strip("\"'")
+    return None
+
 
 @dataclass
 class Completion:
@@ -38,9 +52,9 @@ def complete(model: str, system: str, prompt: str, image: Path, timeout: float =
     if provider not in PROVIDERS or not model_id:
         raise ValueError(f"Model must be '<provider>:<id>' with provider in {sorted(PROVIDERS)}: {model!r}")
     url, key_env = PROVIDERS[provider]
-    key = os.environ.get(key_env)
+    key = _api_key(key_env)
     if not key:
-        raise RuntimeError(f"{key_env} is not set")
+        raise RuntimeError(f"{key_env} is not set (environment or .env)")
 
     mime = "image/png" if image.suffix == ".png" else "image/jpeg"
     data_url = f"data:{mime};base64,{base64.b64encode(image.read_bytes()).decode()}"
