@@ -24,6 +24,16 @@ A small set of real public documents (e.g. voting bulletins published by TSE) se
 
 The harness, methodology, generator and results are public. Only a sample of the scored test set is published; the rest stays private and is regenerated periodically.
 
+## Usage
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv sync
+uv run papelada generate pix_receipt --n 12 --seed 0 --out data/sample
+uv run pytest
+```
+
 ## Status
 
-Early design. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.
+Early design. The PIX receipt generator works; DANFE and voting bulletins are next. See [docs/PLAN.md](docs/PLAN.md) for methodology and roadmap, and [`schemas/`](schemas/) for the extraction targets.

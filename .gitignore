@@ -1,8 +1,9 @@
 .DS_Store
 __pycache__/
 .venv/
+.pytest_cache/
 .env
 
-# Private scored test set — never commit
-data/private/
+# Generated samples are reproducible from seeds; the private scored set must never be committed
+data/
 results/raw/

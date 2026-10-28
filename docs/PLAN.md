@@ -21,11 +21,18 @@ Three document types, three degradation levels, ~30–50 samples, 4–5 models. 
 ## Generator
 
 1. Fake data with valid structure: CPF/CNPJ check digits, NF-e access key (mod 11), E2E PIX IDs, totals that add up.
-2. HTML/CSS templates per document type (several layouts per type — PIX receipts vary per bank) rendered to image with a headless browser.
-3. Degradation via [Augraphy](https://github.com/sparkfish/augraphy) or equivalent.
-4. Each sample is saved as `image.png` + `gold.json` + `meta.json` (type, layout, level, seed).
+2. Several layouts per document type (PIX receipts vary per bank), drawn with Pillow from a small block-based renderer at 2× scale. No headless browser needed. Institutions are fictional and layouts generic; nothing imitates a real bank's branding.
+3. Degradation implemented with Pillow + NumPy (`src/papelada/degrade.py`).
+4. Each document is rendered at **every** level, so the effect of degradation is measured on paired samples:
 
-Every sample is reproducible from its seed.
+```
+pix_receipt-000042/
+  gold.json   # extraction target, validated against the schema
+  meta.json   # doc type, seed, layout, absent fields, generator version
+  L0.png  L1.jpg  L2.jpg
+```
+
+Every sample is reproducible from its seed (fonts are resolved from the OS, so pixels can differ across machines; gold never does).
 
 ### Optional fields
 
@@ -68,7 +75,8 @@ Reported per model: field accuracy, hallucination rate, omission rate, table cel
 
 ## Open decisions
 
-- [ ] Language for generator and harness (Python fits the tooling: Faker `pt_BR`, Augraphy, validate-docbr)
+- [x] Language for generator and harness: Python (managed with uv)
+- [ ] Bundle open-licensed fonts so renders are pixel-identical across machines
 - [ ] License (MIT for code; dataset license TBD)
 - [ ] Results format and leaderboard page
 

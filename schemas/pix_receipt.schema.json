@@ -22,7 +22,7 @@
   "required": ["amount", "datetime", "end_to_end_id", "description", "payer", "payee", "payee_key"],
   "properties": {
     "amount": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d{2}$" },
-    "datetime": { "type": ["string", "null"], "description": "ISO 8601 local time without offset, seconds when shown (e.g. 2026-10-28T14:03:12)" },
+    "datetime": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$", "description": "ISO 8601 local time without offset; include seconds only when the document shows them (e.g. 2026-10-28T14:03:12)" },
     "end_to_end_id": { "type": ["string", "null"], "pattern": "^E[0-9A-Za-z]{31}$", "description": "E2E transaction ID, 32 characters" },
     "description": { "type": ["string", "null"], "description": "Message attached by the payer" },
     "payer": { "$ref": "#/$defs/party" },
