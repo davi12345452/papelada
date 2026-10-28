@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/davi12345452/papelada/schemas/danfe.schema.json",
+  "title": "DANFE",
+  "description": "Printed representation of a Brazilian electronic invoice (NF-e). Any field not present in the document must be null.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "money": { "type": ["string", "null"], "pattern": "^-?\\d+\\.\\d{2}$", "description": "Decimal string, dot separator, two decimals" },
+    "address": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["street", "number", "district", "city", "state", "zip_code"],
+      "properties": {
+        "street": { "type": ["string", "null"] },
+        "number": { "type": ["string", "null"] },
+        "district": { "type": ["string", "null"] },
+        "city": { "type": ["string", "null"] },
+        "state": { "type": ["string", "null"], "pattern": "^[A-Z]{2}$" },
+        "zip_code": { "type": ["string", "null"], "pattern": "^\\d{8}$" }
+      }
+    }
+  },
+  "required": ["access_key", "number", "series", "issue_date", "operation_type", "issuer", "recipient", "items", "totals"],
+  "properties": {
+    "access_key": { "type": ["string", "null"], "pattern": "^\\d{44}$", "description": "Chave de acesso, digits only" },
+    "number": { "type": ["string", "null"], "pattern": "^\\d+$" },
+    "series": { "type": ["string", "null"], "pattern": "^\\d+$" },
+    "issue_date": { "type": ["string", "null"], "format": "date" },
+    "operation_type": { "type": ["string", "null"], "enum": ["inbound", "outbound", null], "description": "0 - Entrada / 1 - Saída" },
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "cnpj", "state_registration", "address"],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "cnpj": { "type": ["string", "null"], "pattern": "^\\d{14}$" },
+        "state_registration": { "type": ["string", "null"], "description": "Inscrição estadual, as printed" },
+        "address": { "$ref": "#/$defs/address" }
+      }
+    },
+    "recipient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "document", "address"],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "document": { "type": ["string", "null"], "pattern": "^(\\d{11}|\\d{14})$", "description": "CPF or CNPJ, digits only" },
+        "address": { "$ref": "#/$defs/address" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "description", "ncm", "cfop", "unit", "quantity", "unit_price", "total"],
+        "properties": {
+          "code": { "type": ["string", "null"] },
+          "description": { "type": ["string", "null"] },
+          "ncm": { "type": ["string", "null"], "pattern": "^\\d{8}$" },
+          "cfop": { "type": ["string", "null"], "pattern": "^\\d{4}$" },
+          "unit": { "type": ["string", "null"] },
+          "quantity": { "type": ["string", "null"], "pattern": "^\\d+(\\.\\d+)?$" },
+          "unit_price": { "$ref": "#/$defs/money" },
+          "total": { "$ref": "#/$defs/money" }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["products", "icms_base", "icms", "freight", "discount", "invoice_total"],
+      "properties": {
+        "products": { "$ref": "#/$defs/money" },
+        "icms_base": { "$ref": "#/$defs/money" },
+        "icms": { "$ref": "#/$defs/money" },
+        "freight": { "$ref": "#/$defs/money" },
+        "discount": { "$ref": "#/$defs/money" },
+        "invoice_total": { "$ref": "#/$defs/money" }
+      }
+    }
+  }
+}

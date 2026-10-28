@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+.venv/
+.env
+
+# Private scored test set — never commit
+data/private/
+results/raw/

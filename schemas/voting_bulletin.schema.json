@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/davi12345452/papelada/schemas/voting_bulletin.schema.json",
+  "title": "Voting bulletin",
+  "description": "Brazilian electronic voting machine bulletin (boletim de urna). Any field not present in the document must be null. Counts are integers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["election", "round", "date", "state", "municipality_code", "municipality", "zone", "section", "eligible_voters", "turnout", "absent", "contests"],
+  "properties": {
+    "election": { "type": ["string", "null"], "description": "Election name as printed" },
+    "round": { "type": ["integer", "null"], "enum": [1, 2, null] },
+    "date": { "type": ["string", "null"], "format": "date" },
+    "state": { "type": ["string", "null"], "pattern": "^[A-Z]{2}$" },
+    "municipality_code": { "type": ["string", "null"], "pattern": "^\\d+$", "description": "TSE municipality code" },
+    "municipality": { "type": ["string", "null"] },
+    "zone": { "type": ["integer", "null"] },
+    "section": { "type": ["integer", "null"] },
+    "eligible_voters": { "type": ["integer", "null"], "description": "Eleitores aptos" },
+    "turnout": { "type": ["integer", "null"], "description": "Comparecimento" },
+    "absent": { "type": ["integer", "null"], "description": "Eleitores faltosos" },
+    "contests": {
+      "type": "array",
+      "description": "One entry per office (cargo) in the bulletin",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["office", "candidates", "party_votes", "blank", "null_votes", "total"],
+        "properties": {
+          "office": { "type": ["string", "null"], "description": "Office as printed, e.g. Presidente, Governador" },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["number", "name", "party", "votes"],
+              "properties": {
+                "number": { "type": ["string", "null"], "pattern": "^\\d+$" },
+                "name": { "type": ["string", "null"] },
+                "party": { "type": ["string", "null"] },
+                "votes": { "type": ["integer", "null"] }
+              }
+            }
+          },
+          "party_votes": {
+            "type": "array",
+            "description": "Votes cast for a party only (voto de legenda), when applicable",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["party", "votes"],
+              "properties": {
+                "party": { "type": ["string", "null"] },
+                "votes": { "type": ["integer", "null"] }
+              }
+            }
+          },
+          "blank": { "type": ["integer", "null"] },
+          "null_votes": { "type": ["integer", "null"] },
+          "total": { "type": ["integer", "null"], "description": "Total de votos apurados for this office" }
+        }
+      }
+    }
+  }
+}

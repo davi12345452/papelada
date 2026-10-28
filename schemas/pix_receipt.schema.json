@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/davi12345452/papelada/schemas/pix_receipt.schema.json",
+  "title": "PIX receipt",
+  "description": "Transfer receipt (comprovante) from a Brazilian banking app. Any field not present in the document must be null. Masked values must be transcribed with the mask as shown, using '*' for hidden characters.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "document", "institution", "agency", "account"],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "document": { "type": ["string", "null"], "description": "CPF/CNPJ as shown, keeping masks (e.g. ***.456.789-**)" },
+        "institution": { "type": ["string", "null"] },
+        "agency": { "type": ["string", "null"] },
+        "account": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "required": ["amount", "datetime", "end_to_end_id", "description", "payer", "payee", "payee_key"],
+  "properties": {
+    "amount": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d{2}$" },
+    "datetime": { "type": ["string", "null"], "description": "ISO 8601 local time without offset, seconds when shown (e.g. 2026-10-28T14:03:12)" },
+    "end_to_end_id": { "type": ["string", "null"], "pattern": "^E[0-9A-Za-z]{31}$", "description": "E2E transaction ID, 32 characters" },
+    "description": { "type": ["string", "null"], "description": "Message attached by the payer" },
+    "payer": { "$ref": "#/$defs/party" },
+    "payee": { "$ref": "#/$defs/party" },
+    "payee_key": { "type": ["string", "null"], "description": "PIX key as shown (email, phone, CPF/CNPJ or random key), keeping masks" }
+  }
+}
